@@ -1,6 +1,22 @@
 is_global = true
 build_property.TargetFramework = net10.0
+build_property.TargetFramework = net10.0
 build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.RuntimeIdentifier = 
+build_property.AppHostRuntimeIdentifier = 
+build_property.DefaultAppHostRuntimeIdentifier = 
+build_property.NETCoreSdkPortableRuntimeIdentifier = win-x64
+build_property.IsTestProject = true
+build_property.AvaloniaMainPackageVersion = 
+build_property.HasAvaloniaDiagnosticsSupport = 
+build_property.AvaloniaUseCompiledBindingsByDefault = 
+build_property._AvnB64ProjectAssetsFile = QzpcVXNlcnNcam9zaHVcT25lRHJpdmVcRGVza3RvcFxCaW5hcnlUaWNrZXJcQmluYXJ5VGlja2VyLkRvbWFpbi5UZXN0c1xvYmpccHJvamVjdC5hc3NldHMuanNvbg==
+build_property._AvnB64ProjectDepsFilePath = 
+build_property._AvnB64ProjectRuntimeConfigFilePath = 
+build_property._AvnB64IntermediateOutputPath = b2JqXERlYnVnXG5ldDEwLjBc
+build_property._AvnB64PublishDir = YmluXERlYnVnXG5ldDEwLjBccHVibGlzaFw=
+build_property._AvnB64AvaloniaPreviewerNetCoreToolPath = 
 build_property.TargetFrameworkVersion = v10.0
 build_property.TargetPlatformMinVersion = 
 build_property.UsingMicrosoftNETSdkWeb = 
