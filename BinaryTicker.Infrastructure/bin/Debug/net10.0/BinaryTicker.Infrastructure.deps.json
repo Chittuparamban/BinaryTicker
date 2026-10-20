@@ -9,6 +9,7 @@
       "BinaryTicker.Infrastructure/1.0.0": {
         "dependencies": {
           "Alpaca.Markets": "8.0.0",
+          "BinaryTicker.Application": "1.0.0",
           "BinaryTicker.Domain": "1.0.0",
           "MessagePack": "3.1.9"
         },
@@ -84,6 +85,17 @@
           }
         }
       },
+      "BinaryTicker.Application/1.0.0": {
+        "dependencies": {
+          "BinaryTicker.Domain": "1.0.0"
+        },
+        "runtime": {
+          "BinaryTicker.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "BinaryTicker.Domain/1.0.0": {
         "runtime": {
           "BinaryTicker.Domain.dll": {
@@ -148,6 +160,11 @@
       "sha512": "sha512-xRlcE+1FidqIfZ7zxBT6klSblJ/7MAJq1x5yvYoLnwNhs8Xc2gp3Srf8wHG2NpFxVBqrldc3svhkMPJjSzTmzw==",
       "path": "polly.core/8.6.3",
       "hashPath": "polly.core.8.6.3.nupkg.sha512"
+    },
+    "BinaryTicker.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "BinaryTicker.Domain/1.0.0": {
       "type": "project",

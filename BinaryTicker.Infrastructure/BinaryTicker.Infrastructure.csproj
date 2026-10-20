@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BinaryTicker.Domain\BinaryTicker.Domain.csproj" />
+    <ProjectReference Include="..\BinaryTicker.Application\BinaryTicker.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -112,6 +112,19 @@
           }
         }
       },
+      "BinaryTicker.Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "BinaryTicker.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/BinaryTicker.Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/BinaryTicker.Application.dll": {}
+        }
+      },
       "BinaryTicker.Domain/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -310,6 +323,11 @@
         "polly.core.nuspec"
       ]
     },
+    "BinaryTicker.Application/1.0.0": {
+      "type": "project",
+      "path": "../BinaryTicker.Application/BinaryTicker.Application.csproj",
+      "msbuildProject": "../BinaryTicker.Application/BinaryTicker.Application.csproj"
+    },
     "BinaryTicker.Domain/1.0.0": {
       "type": "project",
       "path": "../BinaryTicker.Domain/BinaryTicker.Domain.csproj",
@@ -319,6 +337,7 @@
   "projectFileDependencyGroups": {
     "net10.0": [
       "Alpaca.Markets >= 8.0.0",
+      "BinaryTicker.Application >= 1.0.0",
       "BinaryTicker.Domain >= 1.0.0",
       "MessagePack >= 3.1.9"
     ]
@@ -349,6 +368,9 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
+            "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker.Application\\BinaryTicker.Application.csproj": {
+              "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker.Application\\BinaryTicker.Application.csproj"
+            },
             "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj": {
               "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj"
             }

@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="BinaryTicker.Application/BinaryTicker.Application.csproj" />
   <Project Path="BinaryTicker.Desktop/BinaryTicker.Desktop.csproj" />
   <Project Path="BinaryTicker.Domain.Tests/BinaryTicker.Domain.Tests.csproj" />
   <Project Path="BinaryTicker.Domain/BinaryTicker.Domain.csproj" />

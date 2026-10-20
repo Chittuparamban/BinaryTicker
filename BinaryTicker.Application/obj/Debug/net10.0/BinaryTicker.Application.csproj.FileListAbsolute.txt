@@ -1,0 +1,16 @@
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\bin\Debug\net10.0\BinaryTicker.Application.deps.json
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\bin\Debug\net10.0\BinaryTicker.Application.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\bin\Debug\net10.0\BinaryTicker.Application.pdb
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\bin\Debug\net10.0\BinaryTicker.Domain.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\bin\Debug\net10.0\BinaryTicker.Domain.pdb
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.csproj.AssemblyReference.cache
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.AssemblyInfoInputs.cache
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.AssemblyInfo.cs
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.csproj.CoreCompileInputs.cache
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.sourcelink.json
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTi.26C0B750.Up2Date
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\refint\BinaryTicker.Application.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\BinaryTicker.Application.pdb
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Application\obj\Debug\net10.0\ref\BinaryTicker.Application.dll

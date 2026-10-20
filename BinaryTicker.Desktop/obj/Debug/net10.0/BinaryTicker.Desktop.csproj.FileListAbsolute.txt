@@ -102,3 +102,5 @@ C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net1
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\Polly.Core.dll
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\BinaryTicker.Infrastructure.dll
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\BinaryTicker.Infrastructure.pdb
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\BinaryTicker.Application.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\BinaryTicker.Application.pdb
