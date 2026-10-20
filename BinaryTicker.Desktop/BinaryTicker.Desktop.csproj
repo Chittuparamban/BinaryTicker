@@ -21,9 +21,11 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="MessagePack" Version="3.1.9" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BinaryTicker.Domain\BinaryTicker.Domain.csproj" />
+    <ProjectReference Include="..\BinaryTicker.Infrastructure\BinaryTicker.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

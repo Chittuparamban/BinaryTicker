@@ -93,3 +93,12 @@ C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\obj\Debug\net1
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\obj\Debug\net10.0\BinaryTicker.Desktop.pdb
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\obj\Debug\net10.0\BinaryTicker.Desktop.genruntimeconfig.cache
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\obj\Debug\net10.0\ref\BinaryTicker.Desktop.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\Alpaca.Markets.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\MessagePack.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\MessagePack.Annotations.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\Microsoft.NET.StringTools.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\Newtonsoft.Json.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\Polly.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\Polly.Core.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\BinaryTicker.Infrastructure.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker.Desktop\bin\Debug\net10.0\BinaryTicker.Infrastructure.pdb
