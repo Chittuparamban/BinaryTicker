@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using Alpaca.Markets;
 using System.Threading.Tasks;
 
@@ -8,21 +9,45 @@ namespace BinaryTicker
     {
         public static async Task Main()
         {
-            var keyId = Environment.GetEnvironmentVariable("APCA_API_KEY_ID")
-                ?? throw new InvalidOperationException("APCA_API_KEY_ID is required.");
-            var secretKey = Environment.GetEnvironmentVariable("APCA_API_SECRET_KEY")
-                ?? throw new InvalidOperationException("APCA_API_SECRET_KEY is required.");
+            try
+            {
+                var keyId = Environment.GetEnvironmentVariable(
+                    "ALPACA_API_KEY_ID");
 
-            var client = Environments.Paper
-                .GetAlpacaTradingClient(new SecretKey(keyId, secretKey));
+                var secretKey = Environment.GetEnvironmentVariable(
+                    "ALPACA_API_SECRET_KEY");
 
-            var clock = await client.GetClockAsync();
+                if (string.IsNullOrWhiteSpace(keyId) ||
+                    string.IsNullOrWhiteSpace(secretKey))
+                {
+                    throw new InvalidOperationException(
+                        "Alpaca environment variables are missing or empty.");
+                }
 
-            if (clock != null)
+                Console.WriteLine("Credentials loaded.");
+                Console.WriteLine("Connecting to Alpaca Paper Trading...");
+
+                using var client = Environments.Paper
+                    .GetAlpacaTradingClient(
+                        new SecretKey(keyId, secretKey));
+
+                var clock = await client.GetClockAsync();
+
+                if (clock != null)
+                {
+                    Console.WriteLine("Connected successfully!");
+
+                    Console.WriteLine(
+                        "Timestamp: {0}, NextOpen: {1}, NextClose: {2}",
+                        clock.TimestampUtc,
+                        clock.NextOpenUtc,
+                        clock.NextCloseUtc);
+                }
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(
-                    "Timestamp: {0}, NextOpen: {1}, NextClose: {2}",
-                    clock.TimestampUtc, clock.NextOpenUtc, clock.NextCloseUtc);
+                    $"Alpaca connection failed: {ex.Message}");
             }
         }
     }
