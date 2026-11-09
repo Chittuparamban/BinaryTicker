@@ -27,8 +27,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj": {
-                "projectPath": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj"
+              "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj": {
+                "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj"
               }
             }
           }
@@ -343,14 +343,14 @@
         }
       }
     },
-    "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj": {
+    "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj",
         "projectName": "BinaryTicker.Domain",
-        "projectPath": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj",
+        "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj",
         "packagesPath": "C:\\Users\\joshu\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\obj\\",
+        "outputPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\joshu\\AppData\\Roaming\\NuGet\\NuGet.Config"
