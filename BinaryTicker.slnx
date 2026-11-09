@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="BinaryTicker.Application.Tests/BinaryTicker.Application.Tests.csproj" />
+  <Project Path="BinaryTicker.Application/BinaryTicker.Application.csproj" />
+  <Project Path="BinaryTicker.Console/BinaryTicker.Console.csproj" />
+  <Project Path="BinaryTicker.Domain.Tests/BinaryTicker.Domain.Tests.csproj" />
+  <Project Path="BinaryTicker.Domain/BinaryTicker.Domain.csproj" />
+  <Project Path="BinaryTicker.Infrastructure.Tests/BinaryTicker.Infrastructure.Tests.csproj" />
+  <Project Path="BinaryTicker.Infrastructure/BinaryTicker.Infrastructure.csproj" />
+</Solution>

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BinaryTicker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+47a3b3647e95946b1d19a6ce20eb0e9cd4392782")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fbc82d40a00fe830767c6d766955fc0c97b2b8d")]
 [assembly: System.Reflection.AssemblyProductAttribute("BinaryTicker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BinaryTicker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
