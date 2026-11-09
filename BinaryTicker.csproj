@@ -7,4 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Alpaca.Markets" Version="8.0.1" />
+    <PackageReference Include="Alpaca.Markets.Extensions" Version="8.0.0" />
+  </ItemGroup>
+
 </Project>
