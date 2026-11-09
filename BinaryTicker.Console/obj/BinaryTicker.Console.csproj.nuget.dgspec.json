@@ -369,8 +369,8 @@
               "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Application\\BinaryTicker.Application.csproj": {
                 "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Application\\BinaryTicker.Application.csproj"
               },
-              "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj": {
-                "projectPath": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj"
+              "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj"
               }
             }
           }
@@ -1030,14 +1030,14 @@
         }
       }
     },
-    "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj": {
+    "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj",
         "projectName": "BinaryTicker.Infrastructure",
-        "projectPath": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj",
+        "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\joshu\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\obj\\",
+        "outputPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\joshu\\AppData\\Roaming\\NuGet\\NuGet.Config"
