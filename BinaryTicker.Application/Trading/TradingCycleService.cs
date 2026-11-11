@@ -73,6 +73,93 @@ namespace BinaryTicker.Application.Trading
             }
         }
 
+
+
+public async Task<TradingCycleResult> ReconcilePendingAsync(
+    CancellationToken ct = default)
+{
+    await _cycleLock.WaitAsync(ct);
+
+    try
+    {
+        DateTimeOffset now = _clock.GetUtcNow();
+
+        TradingAccountSnapshot account =
+            await _gateway.GetAccountAsync(ct);
+
+        if (!account.IsPaper)
+            throw new InvalidOperationException(
+                "A paper-trading account is required.");
+
+        TradeState? state = await _store.LoadAsync(
+            account.AccountId,
+            _settings.Symbol,
+            _settings.Timeframe,
+            _settings.StrategyVersion,
+            ct);
+
+        // Nothing to recover
+        if (state?.PendingOrder is null)
+        {
+            return new TradingCycleResult(
+                CycleOutcome.Hold,
+                "No pending order requires recovery.",
+                now);
+        }
+
+        // Look up the saved client order ID
+        OrderSnapshot? order =
+            await _gateway.GetOrderByClientOrderIdAsync(
+                state.PendingOrder.ClientOrderId,
+                ct);
+
+        if (order is null)
+        {
+            return new TradingCycleResult(
+                CycleOutcome.Blocked,
+                "Pending order not confirmed. Manual reconciliation required.",
+                now);
+        }
+
+        if (order.ClientOrderId != state.PendingOrder.ClientOrderId)
+        {
+            throw new InvalidOperationException(
+                "Broker returned a mismatched order ID.");
+        }
+
+        bool isTerminal =
+            order.Status == OrderStatus.Filled ||
+            order.Status == OrderStatus.Canceled ||
+            order.Status == OrderStatus.Rejected ||
+            order.Status == OrderStatus.Expired;
+
+        if (!isTerminal)
+        {
+            return new TradingCycleResult(
+                CycleOutcome.Blocked,
+                "Pending order is not terminal.",
+                now,
+                order: order);
+        }
+
+        // Broker confirmed a terminal status
+        state = state.ClearPendingOrder();
+
+        await _store.SaveAsync(state, ct);
+
+        return new TradingCycleResult(
+            CycleOutcome.Reconciled,
+            "Order reconciled. Position will be refreshed next cycle.",
+            now,
+            order: order);
+    }
+    finally
+    {
+        _cycleLock.Release();
+    }
+}
+
+
         private async Task<TradingCycleResult> ExecuteCycleAsync(
             CancellationToken ct)
         {

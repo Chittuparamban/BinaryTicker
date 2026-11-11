@@ -1,7 +1,6 @@
 ﻿
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using Alpaca.Markets;
 using BinaryTicker.Infrastructure;
 using BinaryTicker.Application.Trading;
@@ -10,6 +9,8 @@ using BinaryTicker.Domain.Order;
 using BinaryTicker.Domain.Risk;
 using BinaryTicker.Domain.Strategies;
 using BinaryTicker.Infrastructure.DatabaseStorage;
+using System.Threading;
+using BinaryTicker.Application.Trading;
 
 namespace BinaryTicker
 {
@@ -146,12 +147,60 @@ namespace BinaryTicker
                     timeProvider,
                     enablePaperOrders: false);
 
-                // Run one trading cycle
-                TradingCycleResult result = await tradingCycle.RunOnceAsync();
 
-                Console.WriteLine($"Outcome: {result.Outcome}");
-                Console.WriteLine($"Reason: {result.Reason}");
 
+
+// Create the bot runner
+BotRunner runner = new BotRunner(
+    tradingCycle,
+    botSettings,
+    result =>
+    {
+        Console.WriteLine(
+            $"[{result.AtUtc:HH:mm:ss}] " +
+            $"Outcome: {result.Outcome} | " +
+            $"Reason: {result.Reason}");
+    });
+
+// Used to stop the application with Ctrl+C
+using var shutdown = new CancellationTokenSource();
+
+ConsoleCancelEventHandler cancelHandler = (sender, e) =>
+{
+    e.Cancel = true;
+    shutdown.Cancel();
+};
+
+Console.CancelKeyPress += cancelHandler;
+
+try
+{
+    // Reconcile any saved pending order first
+    await runner.RecoverAsync(shutdown.Token);
+
+    // Start the trading loop
+    await runner.StartAsync(shutdown.Token);
+
+    Console.WriteLine("BinaryTicker is running.");
+    Console.WriteLine("Press Ctrl+C to stop.");
+
+    // Remain active until cancellation or loop failure
+    await runner.Completion.WaitAsync(shutdown.Token);
+}
+catch (OperationCanceledException)
+    when (shutdown.IsCancellationRequested)
+{
+    Console.WriteLine("Shutdown requested.");
+}
+finally
+{
+    Console.CancelKeyPress -= cancelHandler;
+
+    // Stop and await the trading loop
+    await runner.StopAsync();
+
+    Console.WriteLine("BinaryTicker stopped.");
+}
                 return 0;
             }
             catch (Exception ex)
