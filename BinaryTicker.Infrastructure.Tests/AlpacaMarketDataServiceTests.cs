@@ -105,7 +105,7 @@ namespace BinaryTicker.Infrastructure.Tests
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(page.Object);
 
-            var settings = new AlpacaSettings("testKey", "testSecret", "iex", "raw", true, null);
+            var settings = new AlpacaSettings("testKey", "testSecret", "iex", "raw", null, true);
 
             return new AlpacaMarketDataService(
                 client.Object,

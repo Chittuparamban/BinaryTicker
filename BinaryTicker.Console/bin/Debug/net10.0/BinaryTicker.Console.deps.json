@@ -297,6 +297,8 @@
       },
       "BinaryTicker.Infrastructure/1.0.0": {
         "dependencies": {
+          "Alpaca.Markets": "8.0.1",
+          "Alpaca.Markets.Extensions": "8.0.0",
           "BinaryTicker.Application": "1.0.0",
           "BinaryTicker.Domain": "1.0.0"
         },
