@@ -701,6 +701,12 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
+              "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Application\\BinaryTicker.Application.csproj": {
+                "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Application\\BinaryTicker.Application.csproj"
+              },
+              "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj": {
+                "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Domain\\BinaryTicker.Domain.csproj"
+              },
               "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj": {
                 "projectPath": "C:\\Users\\joshu\\OneDrive\\Desktop\\BinaryTicker\\BinaryTicker\\BinaryTicker.Infrastructure\\BinaryTicker.Infrastructure.csproj"
               }
