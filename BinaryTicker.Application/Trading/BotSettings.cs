@@ -24,7 +24,8 @@ namespace BinaryTicker.Application.Trading
             int historyBarCount,
             decimal quantity)
         {
-            Symbol = symbol.Trim().ToUpperInvariant();
+            Symbol = symbol?.Trim().ToUpperInvariant()
+    ?? throw new ArgumentNullException(nameof(symbol));
             Timeframe = timeframe;
             StrategyVersion = strategyVersion;
             PollInterval = pollInterval;

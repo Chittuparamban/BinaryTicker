@@ -61,7 +61,6 @@ namespace BinaryTicker.Application.Trading
         public async Task<TradingCycleResult> RunOnceAsync(
             CancellationToken ct = default)
         {
-            // Prevent overlapping cycles in this service instance.
             await _cycleLock.WaitAsync(ct);
 
             try
@@ -79,7 +78,7 @@ namespace BinaryTicker.Application.Trading
         {
             DateTimeOffset now = _clock.GetUtcNow();
 
-            // STEP 1: Retrieve the broker account
+            // STEP 1: Retrieve broker account
             TradingAccountSnapshot account =
                 await _gateway.GetAccountAsync(ct);
 
@@ -87,7 +86,7 @@ namespace BinaryTicker.Application.Trading
                 throw new InvalidOperationException(
                     "A paper-trading account is required.");
 
-            // STEP 2: Restore the previous state
+            // STEP 2: Restore previous state
             TradeState? saved = await _store.LoadAsync(
                 account.AccountId,
                 _settings.Symbol,
@@ -118,8 +117,10 @@ namespace BinaryTicker.Application.Trading
 
                 if (order.ClientOrderId !=
                     state.PendingOrder.ClientOrderId)
+                {
                     throw new InvalidOperationException(
                         "Broker returned a mismatched order ID.");
+                }
 
                 bool isTerminal =
                     order.Status == OrderStatus.Filled ||
@@ -136,7 +137,6 @@ namespace BinaryTicker.Application.Trading
                         order: order);
                 }
 
-                // Save before processing another candle.
                 state = state.ClearPendingOrder();
                 await _store.SaveAsync(state, ct);
 
@@ -161,14 +161,15 @@ namespace BinaryTicker.Application.Trading
                 .ToList();
 
             if (bars.Count == 0)
+            {
                 return new TradingCycleResult(
                     CycleOutcome.NoNewBar,
                     "No completed bars available.",
                     now);
+            }
 
             MarketBar latest = bars[^1];
 
-            // Prevent repeating the same candle's signal.
             if (state.LastProcessedCandleUtc is not null &&
                 latest.CloseTimeUtc <= state.LastProcessedCandleUtc)
             {
@@ -178,7 +179,6 @@ namespace BinaryTicker.Application.Trading
                     now);
             }
 
-            // Do not make decisions on stale data.
             if (latest.CloseTimeUtc > now ||
                 now - latest.CloseTimeUtc > _settings.MaxDataLag)
             {
@@ -188,14 +188,14 @@ namespace BinaryTicker.Application.Trading
                     now);
             }
 
-            // STEP 5: Retrieve the existing position
+            // STEP 5: Retrieve existing position
             PositionSnapshot? position =
                 await _gateway.GetPositionAsync(
                     _settings.Symbol, ct);
 
             decimal heldQuantity = position?.Quantity ?? 0m;
 
-            // STEP 6: Restore the active Fibonacci setup
+            // STEP 6: Restore active Fibonacci setup
             FibonacciLevels? activeSetup = null;
 
             if (state.ActiveLow is not null &&
@@ -206,13 +206,13 @@ namespace BinaryTicker.Application.Trading
                     state.ActiveHigh);
             }
 
-            // STEP 7: Evaluate the strategy
+            // STEP 7: Evaluate strategy
             TradeSignal signal = _strategy.Evaluate(
                 bars,
                 heldQuantity,
                 activeSetup);
 
-            // STEP 8: Persist the evaluated candle and setup
+            // STEP 8: Save evaluated candle and setup
             state = state.WithEvaluation(
                 latest.CloseTimeUtc,
                 signal.ActiveSetup);
@@ -238,10 +238,13 @@ namespace BinaryTicker.Application.Trading
                 quantity = _settings.Quantity;
 
                 if (heldQuantity != 0)
+                {
                     return new TradingCycleResult(
                         CycleOutcome.Blocked,
                         "Cannot buy while a position already exists.",
-                        now, signal);
+                        now,
+                        signal);
+                }
             }
             else if (signal.Action == SignalAction.Sell)
             {
@@ -249,10 +252,13 @@ namespace BinaryTicker.Application.Trading
                 quantity = heldQuantity;
 
                 if (heldQuantity <= 0)
+                {
                     return new TradingCycleResult(
                         CycleOutcome.Blocked,
                         "There are no shares to sell.",
-                        now, signal);
+                        now,
+                        signal);
+                }
             }
             else
             {
@@ -260,14 +266,18 @@ namespace BinaryTicker.Application.Trading
                     "Unknown strategy action.");
             }
 
-            // STEP 10: Check current trading eligibility
+            // STEP 10: Create OrderIntent once
+            OrderIntent intent = creator.Create(
+                _settings.Symbol,
+                quantity,
+                "bt-" + Guid.NewGuid().ToString("N"));
+
+            // STEP 11: Check market eligibility and risk
             bool isMarketOpen =
                 await _gateway.IsMarketOpenAsync(ct);
 
             var riskResult = _riskManager.Validate(
-                intent: creator.Create(
-                    _settings.Symbol, quantity,
-                    "bt-" + Guid.NewGuid().ToString("N")),
+                intent: intent,
                 limits: _riskLimits,
                 marketPrice: latest.Close,
                 availableBuyingPower: account.BuyingPower,
@@ -278,31 +288,29 @@ namespace BinaryTicker.Application.Trading
                 isMarketOpen: isMarketOpen);
 
             if (!riskResult.Allowed)
+            {
                 return new TradingCycleResult(
                     CycleOutcome.Blocked,
                     riskResult.Reason,
                     now,
                     signal);
+            }
 
-            // STEP 11: Preview mode is enabled by default
+            // STEP 12: Preview mode
             if (!_enablePaperOrders)
+            {
                 return new TradingCycleResult(
                     CycleOutcome.Preview,
                     $"Risk checks passed. Would {signal.Action} {quantity} shares.",
                     now,
                     signal);
+            }
 
-            // STEP 12: Persist the order before submission
-            OrderIntent intent = creator.Create(
-                _settings.Symbol,
-                quantity,
-                "bt-" + Guid.NewGuid().ToString("N"));
-
+            // STEP 13: Save pending order before submission
             state = state.WithPendingOrder(intent);
             await _store.SaveAsync(state, ct);
 
-            // STEP 13: Submit once.
-            // If this throws, the pending order stays saved.
+            // STEP 14: Submit validated order once
             OrderSnapshot submitted =
                 await _gateway.SubmitOrderAsync(intent, ct);
 
