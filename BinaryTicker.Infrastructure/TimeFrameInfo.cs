@@ -8,9 +8,7 @@ namespace BinaryTicker.Infrastructure
         public BarTimeFrame AlpacaTimeFrame { get; }
         public TimeSpan Duration { get; }
 
-        public TimeFrameInfo(
-            BarTimeFrame alpacaTimeFrame,
-            TimeSpan duration)
+        public TimeFrameInfo( BarTimeFrame alpacaTimeFrame, TimeSpan duration)
         {
             AlpacaTimeFrame = alpacaTimeFrame;
             Duration = duration;

@@ -18,7 +18,7 @@ namespace BinaryTicker
                 string secretKey = Environment.GetEnvironmentVariable("ALPACA_API_SECRET_KEY")
                 ?? throw new InvalidOperationException("Missing Secret Key.");
 
-                AlpacaSettings settings = new AlpacaSettings(keyId, secretKey, "iex", "raw", true, TimeSpan.FromSeconds(30));
+                AlpacaSettings settings = new AlpacaSettings(keyId, secretKey, "iex", "raw", TimeSpan.FromSeconds(30), true);
 
                 Console.WriteLine("Credentials loaded.");
                 Console.WriteLine("Connecting to Alpaca Paper Trading...");
@@ -37,22 +37,56 @@ namespace BinaryTicker
                     throw new InvalidOperationException("Alpaca returned an empty clock response.");
                 }
 
-                Console.WriteLine("Connected successfully!");
+                Console.WriteLine("Connected successfully clock is shown");
 
                 Console.WriteLine("Timestamp: {0}, NextOpen: {1}, NextClose: {2}",
                         clock.TimestampUtc,clock.NextOpenUtc,clock.NextCloseUtc);
-                
-                // successful completion
+            
+
+
+
+                AlpacaTradingGateway gateway = new AlpacaTradingGateway(client, settings);
+
+                // Retrieve account information
+                var account = await gateway.GetAccountAsync();
+
+                Console.WriteLine("Connected successfully for AlpacaTradingGateway!");
+                Console.WriteLine($"Cash: {account.Cash}");
+                Console.WriteLine($"Buying Power: {account.BuyingPower}");
+                Console.WriteLine($"Can Trade: {account.CanTrade}");
+
+                // Check market status
+                bool isOpen = await gateway.IsMarketOpenAsync();
+
+                Console.WriteLine($"Market Open: {isOpen}");
+
+                // Retrieve existing position
+                var position = await gateway.GetPositionAsync("AAPL");
+
+                if (position == null)
+                {
+                    Console.WriteLine("No AAPL position found.");
+                }
+                else
+                {
+                    Console.WriteLine($"Symbol: {position.Symbol}");
+                    Console.WriteLine($"Quantity: {position.Quantity}");
+                    Console.WriteLine($"Average Entry Price: {position.AverageEntryPrice}");
+                    Console.WriteLine($"Market Value: {position.MarketValue}");
+                }
                 return 0;
-
             }
-
             catch (Exception ex)
             {
-                Console.WriteLine($"Error occured. Connection failed due to: \n{ex.Message}");
+                Console.Error.WriteLine(
+                    $"BinaryTicker error: {ex.Message}");
+
                 return 1;
-            
+
             }
+
         }
+
     }
+
 }

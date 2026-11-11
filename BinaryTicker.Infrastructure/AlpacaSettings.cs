@@ -15,7 +15,7 @@ namespace BinaryTicker.Infrastructure
 
         // public Constructor
         public AlpacaSettings(string keyId, string secretKey, string dataFeed,
-            string adjustmentPolicy, bool isPaperTrading, TimeSpan? requestTimeout)
+            string adjustmentPolicy, TimeSpan? requestTimeout, bool isPaperTrading)
         {
             KeyId = keyId;
             SecretKey = secretKey;
