@@ -1078,6 +1078,16 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Alpaca.Markets": {
+              "target": "Package",
+              "version": "[8.0.1, )"
+            },
+            "Alpaca.Markets.Extensions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

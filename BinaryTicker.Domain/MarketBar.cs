@@ -1,6 +1,6 @@
 using System;
 
-namespace BinaryTicker.Domian
+namespace BinaryTicker.Domain
 {
     public sealed class MarketBar
     {

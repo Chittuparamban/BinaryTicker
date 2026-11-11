@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using BinaryTicker.Domain;
-using BinaryTicker.Domian;
 
 namespace BinaryTicker.Application.Interfaces
 {
