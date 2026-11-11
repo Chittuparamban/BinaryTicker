@@ -128,13 +128,19 @@ namespace BinaryTicker.Application.Trading
         }
 
         // Called by StoppedState
-        internal async Task RecoverCoreAsync(CancellationToken ct)
-        {
-            TradingCycleResult result =
-                await _tradingCycle.ReconcilePendingAsync(ct);
+internal async Task RecoverCoreAsync(CancellationToken ct)
+{
+    TradingCycleResult result =
+        await _tradingCycle.ReconcilePendingAsync(ct);
 
-            _onCycleCompleted?.Invoke(result);
-        }
+    _onCycleCompleted?.Invoke(result);
+
+    if (result.Outcome == CycleOutcome.Blocked)
+    {
+        throw new InvalidOperationException(
+            $"Bot recovery blocked: {result.Reason}");
+    }
+}
 
         // Main asynchronous execution loop
         private async Task RunLoopAsync(CancellationToken ct)
