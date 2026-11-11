@@ -30,3 +30,8 @@ incomplete bars and bounded read retries.
 Keep feed and adjustment mode consistent.
 Construct the new regular MarketBar class; do not substitute fabricated data on failure.
 **/
+
+
+// This class implements the Adapter design
+// retrieving historical stock prices from Alpaca and converting them into MarketBar objects
+
