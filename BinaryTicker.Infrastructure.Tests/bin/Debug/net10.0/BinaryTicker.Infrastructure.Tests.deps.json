@@ -8,6 +8,8 @@
     ".NETCoreApp,Version=v10.0": {
       "BinaryTicker.Infrastructure.Tests/1.0.0": {
         "dependencies": {
+          "BinaryTicker.Application": "1.0.0",
+          "BinaryTicker.Domain": "1.0.0",
           "BinaryTicker.Infrastructure": "1.0.0",
           "Microsoft.NET.Test.Sdk": "17.14.0",
           "Moq": "4.21.0",

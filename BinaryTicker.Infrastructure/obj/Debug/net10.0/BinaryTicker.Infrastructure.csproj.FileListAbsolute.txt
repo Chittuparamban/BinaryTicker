@@ -1,4 +1,4 @@
-c:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\bin\Debug\net10.0\BinaryTicker.Infrastructure.deps.json
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\bin\Debug\net10.0\BinaryTicker.Infrastructure.deps.json
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\bin\Debug\net10.0\BinaryTicker.Infrastructure.dll
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\bin\Debug\net10.0\BinaryTicker.Infrastructure.pdb
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\bin\Debug\net10.0\BinaryTicker.Application.dll
@@ -11,8 +11,8 @@ C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastru
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTicker.Infrastructure.AssemblyInfo.cs
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTicker.Infrastructure.csproj.CoreCompileInputs.cache
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTicker.Infrastructure.sourcelink.json
-c:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTi.600707B7.Up2Date
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTi.600707B7.Up2Date
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTicker.Infrastructure.dll
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\refint\BinaryTicker.Infrastructure.dll
 C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\BinaryTicker.Infrastructure.pdb
-c:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\ref\BinaryTicker.Infrastructure.dll
+C:\Users\joshu\OneDrive\Desktop\BinaryTicker\BinaryTicker\BinaryTicker.Infrastructure\obj\Debug\net10.0\ref\BinaryTicker.Infrastructure.dll
