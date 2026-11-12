@@ -1,10 +1,11 @@
-
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Alpaca.Markets;
+using BinaryTicker.Domain;
 using BinaryTicker.Infrastructure;
-using Moq;
 using NUnit.Framework;
 
 namespace BinaryTicker.Infrastructure.Tests
@@ -13,108 +14,108 @@ namespace BinaryTicker.Infrastructure.Tests
     public class AlpacaMarketDataServiceTests
     {
         private static readonly DateTimeOffset Now =
-            new DateTimeOffset(
-                2026, 11, 9, 16, 0, 0, TimeSpan.Zero);
+            new DateTimeOffset(2026, 11, 9, 16, 0, 0, TimeSpan.Zero);
 
-        // TEST 1: Completed candle is accepted
+        // TEST 1: Completed candle is accepted.
         [Test]
         public async Task CompletedCandle_IsIncluded()
         {
-            // Candle 15:57–15:58, plus 1-minute delay
-            var service = CreateService(
-                CreateBar(57));
+            AlpacaMarketDataService service = CreateService(CreateBar(57));
 
-            var bars = await GetBars(service);
+            IReadOnlyList<MarketBar> bars = await GetBars(service);
 
             Assert.That(bars, Has.Count.EqualTo(1));
             Assert.That(bars[0].CloseTimeUtc,
                 Is.EqualTo(Now.AddMinutes(-2)));
         }
 
-        // TEST 2: Incomplete/recent candle is rejected
+        // TEST 2: A too-recent candle is excluded.
         [Test]
         public async Task IncompleteCandle_IsExcluded()
         {
-            var service = CreateService(
-                CreateBar(57),  // Complete
-                CreateBar(59)); // Too recent
+            AlpacaMarketDataService service = CreateService(
+                CreateBar(57),
+                CreateBar(59));
 
-            var bars = await GetBars(service);
+            IReadOnlyList<MarketBar> bars = await GetBars(service);
 
             Assert.That(bars, Has.Count.EqualTo(1));
             Assert.That(bars[0].OpenTimeUtc,
                 Is.EqualTo(Now.AddMinutes(-3)));
         }
 
-        // TEST 3: Sorting and duplicate removal
+        // TEST 3: Bars are sorted and the latest duplicate wins.
         [Test]
         public async Task Bars_AreSortedAndDeduplicated()
         {
-            var service = CreateService(
+            AlpacaMarketDataService service = CreateService(
                 CreateBar(55, 101m),
                 CreateBar(50, 102m),
                 CreateBar(55, 104m));
 
-            var bars = await GetBars(service);
+            IReadOnlyList<MarketBar> bars = await GetBars(service);
 
             Assert.That(bars, Has.Count.EqualTo(2));
-
             Assert.That(bars[0].OpenTimeUtc,
                 Is.LessThan(bars[1].OpenTimeUtc));
-
-            // Last duplicate replaces the first
             Assert.That(bars[1].Close, Is.EqualTo(104m));
         }
 
-        // Simulate Alpaca's IBar objects
-        private static IBar CreateBar(
-            int minute, decimal close = 103m)
+        // A small .NET proxy stands in for the SDK's IBar interface.
+        private static IBar CreateBar(int minute, decimal close = 103m)
         {
-            var bar = new Mock<IBar>();
+            DateTime barTime = new DateTime(
+                2026, 11, 9, 15, minute, 0, DateTimeKind.Utc);
 
-            bar.SetupGet(b => b.TimeUtc)
-                .Returns(new DateTime(
-                    2026, 11, 9, 15, minute, 0,
-                    DateTimeKind.Utc));
-
-            bar.SetupGet(b => b.Open).Returns(100m);
-            bar.SetupGet(b => b.High).Returns(110m);
-            bar.SetupGet(b => b.Low).Returns(90m);
-            bar.SetupGet(b => b.Close).Returns(close);
-            bar.SetupGet(b => b.Volume).Returns(1000m);
-            bar.SetupGet(b => b.Symbol).Returns("AAPL");
-
-            return bar.Object;
+            return CreateFake<IBar>(method => method.Name switch
+            {
+                "get_TimeUtc" => barTime,
+                "get_Open" => 100m,
+                "get_High" => 110m,
+                "get_Low" => 90m,
+                "get_Close" => close,
+                "get_Volume" => 1000m,
+                "get_Symbol" => "AAPL",
+                _ => throw new NotSupportedException(
+                    "Unexpected IBar call: " + method.Name)
+            });
         }
 
-        // Create adapter with a simulated SDK response
+        // Return predetermined SDK bars without any network request.
         private static AlpacaMarketDataService CreateService(
             params IBar[] inputBars)
         {
-            var page = new Mock<IPage<IBar>>();
+            IPage<IBar> page = CreateFake<IPage<IBar>>(method => method.Name switch
+            {
+                "get_Items" => inputBars,
+                "get_NextPageToken" => null,
+                "get_Symbol" => "AAPL",
+                _ => throw new NotSupportedException(
+                    "Unexpected IPage call: " + method.Name)
+            });
 
-            page.SetupGet(p => p.Items).Returns(inputBars);
-            page.SetupGet(p => p.NextPageToken)
-                .Returns((string?)null);
-            page.SetupGet(p => p.Symbol).Returns("AAPL");
+            IAlpacaDataClient client = CreateFake<IAlpacaDataClient>(method =>
+            {
+                if (method.Name == "ListHistoricalBarsAsync")
+                {
+                    return Task.FromResult<IPage<IBar>>(page);
+                }
 
-            var client = new Mock<IAlpacaDataClient>();
+                throw new NotSupportedException(
+                    "Unexpected data-client call: " + method.Name);
+            });
 
-            client.Setup(c => c.ListHistoricalBarsAsync(
-                    It.IsAny<HistoricalBarsRequest>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(page.Object);
-
-            var settings = new AlpacaSettings("testKey", "testSecret", "iex", "raw", null, true);
+            AlpacaSettings settings = new AlpacaSettings(
+                "testKey", "testSecret", "iex", "raw", null, true);
 
             return new AlpacaMarketDataService(
-                client.Object,
+                client,
                 settings,
                 new FixedTimeProvider(Now));
         }
 
-        private static async Task<System.Collections.Generic.IReadOnlyList<BinaryTicker.Domain.MarketBar>>
-            GetBars(AlpacaMarketDataService service)
+        private static async Task<IReadOnlyList<MarketBar>> GetBars(
+            AlpacaMarketDataService service)
         {
             return await service.GetCompletedBarsAsync(
                 "AAPL",
@@ -123,7 +124,36 @@ namespace BinaryTicker.Infrastructure.Tests
                 Now);
         }
 
-        // Fixed clock: prevents tests depending on real time
+        // Create an object implementing a supplied interface using
+        // built-in .NET functionality, instead of the Moq package.
+        private static T CreateFake<T>(Func<MethodInfo, object?> handler)
+            where T : class
+        {
+            T fake = DispatchProxy.Create<T, TestProxy>();
+            ((TestProxy)(object)fake).Handler = handler;
+            return fake;
+        }
+
+        // Public and non-sealed so DispatchProxy can derive a runtime type.
+        public class TestProxy : DispatchProxy
+        {
+            public Func<MethodInfo, object?>? Handler { get; set; }
+
+            protected override object? Invoke(
+                MethodInfo? targetMethod,
+                object?[]? args)
+            {
+                if (targetMethod == null || Handler == null)
+                {
+                    throw new InvalidOperationException(
+                        "Test proxy has not been configured.");
+                }
+
+                return Handler(targetMethod);
+            }
+        }
+
+        // Fixed time makes these tests deterministic.
         private sealed class FixedTimeProvider : TimeProvider
         {
             private readonly DateTimeOffset _now;

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
 using NUnit.Framework;
 
 using BinaryTicker.Application.Events;
@@ -50,7 +49,7 @@ namespace BinaryTicker.Infrastructure.Tests
                 BotEventPublisher publisher =
                     new BotEventPublisher();
 
-                Mock<ITradingGateway> gateway;
+                FakeTradingGateway gateway;
 
                 using (var fileObserver =
                     new FileTradeObserver(publisher, logPath))
@@ -90,10 +89,7 @@ namespace BinaryTicker.Infrastructure.Tests
                         Is.EqualTo(CycleOutcome.NoNewBar));
 
                     // Never submit an order to Alpaca
-                    gateway.Verify(g => g.SubmitOrderAsync(
-                        It.IsAny<OrderIntent>(),
-                        It.IsAny<CancellationToken>()),
-                        Times.Never);
+                    Assert.That(gateway.SubmittedOrderCalls, Is.EqualTo(0));
                 }
 
                 // Reopen JSON state after the store closes
@@ -181,10 +177,7 @@ namespace BinaryTicker.Infrastructure.Tests
                     Does.Contain("Order value exceeds limit"));
 
                 // A rejected order must not be submitted
-                gateway.Verify(g => g.SubmitOrderAsync(
-                    It.IsAny<OrderIntent>(),
-                    It.IsAny<CancellationToken>()),
-                    Times.Never);
+                Assert.That(gateway.SubmittedOrderCalls, Is.EqualTo(0));
 
                 TradeState? state = await store.LoadAsync(
                     "test-account",
@@ -236,12 +229,7 @@ namespace BinaryTicker.Infrastructure.Tests
                             maxOrderValue: 1000m,
                             out var gateway);
 
-                    // Broker cannot confirm saved order
-                    gateway.Setup(g =>
-                        g.GetOrderByClientOrderIdAsync(
-                            "previous-order-001",
-                            It.IsAny<CancellationToken>()))
-                        .ReturnsAsync((OrderSnapshot?)null);
+                    // Fake gateway returns null for unknown broker orders.
 
                     TradingCycleResult result =
                         await cycle.RunOnceAsync();
@@ -251,10 +239,7 @@ namespace BinaryTicker.Infrastructure.Tests
                         Is.EqualTo(CycleOutcome.Blocked));
 
                     // Must not submit another order
-                    gateway.Verify(g => g.SubmitOrderAsync(
-                        It.IsAny<OrderIntent>(),
-                        It.IsAny<CancellationToken>()),
-                        Times.Never);
+                    Assert.That(gateway.SubmittedOrderCalls, Is.EqualTo(0));
 
                     TradeState? restored =
                         await store.LoadAsync(
@@ -278,55 +263,11 @@ namespace BinaryTicker.Infrastructure.Tests
         private static TradingCycleService CreateCycle(
             ITradeStateStore store,
             decimal maxOrderValue,
-            out Mock<ITradingGateway> gateway)
+            out FakeTradingGateway gateway)
         {
-            gateway = new Mock<ITradingGateway>(
-                MockBehavior.Strict);
-
-            var marketData = new Mock<IMarketDataService>(
-                MockBehavior.Strict);
-
-            gateway.Setup(g => g.GetAccountAsync(
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new TradingAccountSnapshot(
-                    "test-account",
-                    10000m,
-                    10000m,
-                    true,
-                    true,
-                    Now));
-
-            gateway.Setup(g => g.GetPositionAsync(
-                    "AAPL",
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync((PositionSnapshot?)null);
-
-            gateway.Setup(g => g.IsMarketOpenAsync(
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
-
-            // Simulate no conflicting broker orders.
-            gateway.Setup(g => g.HasOpenOrdersAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false);
-
-            // Simulate a tradable stock.
-            gateway.Setup(g => g.IsAssetTradableAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
-
-            // The interface returns Task<List<MarketBar>>
-            List<MarketBar> bars = CreateMarketBars();
-
-            marketData.Setup(m => m.GetCompletedBarsAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<DateTimeOffset>(),
-                    It.IsAny<DateTimeOffset>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(bars);
+            gateway = new FakeTradingGateway();
+            FakeMarketDataService marketData =
+                new FakeMarketDataService(CreateMarketBars());
 
             FibonacciSettings fibonacciSettings =
                 new FibonacciSettings(
@@ -357,8 +298,8 @@ namespace BinaryTicker.Infrastructure.Tests
                 0.02m);
 
             return new TradingCycleService(
-                marketData.Object,
-                gateway.Object,
+                marketData,
+                gateway,
                 store,
                 strategy,
                 calculator,
@@ -369,6 +310,85 @@ namespace BinaryTicker.Infrastructure.Tests
                 settings,
                 new FixedTimeProvider(Now),
                 enablePaperOrders: false);
+        }
+
+        // A minimal fake that does not contact Alpaca.
+        private sealed class FakeTradingGateway : ITradingGateway
+        {
+            public int SubmittedOrderCalls { get; private set; }
+
+            public Task<TradingAccountSnapshot> GetAccountAsync(
+                CancellationToken cancellationToken = default)
+            {
+                TradingAccountSnapshot account = new TradingAccountSnapshot(
+                    "test-account", 10000m, 10000m, true, true, Now);
+                return Task.FromResult(account);
+            }
+
+            public Task<PositionSnapshot?> GetPositionAsync(
+                string symbol,
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult<PositionSnapshot?>(null);
+            }
+
+            public Task<OrderSnapshot?> GetOrderByClientOrderIdAsync(
+                string clientOrderId,
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult<OrderSnapshot?>(null);
+            }
+
+            public Task<bool> IsMarketOpenAsync(
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(true);
+            }
+
+            public Task<bool> IsAssetTradableAsync(
+                string symbol,
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(true);
+            }
+
+            public Task<bool> HasOpenOrdersAsync(
+                string symbol,
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(false);
+            }
+
+            public Task<OrderSnapshot> SubmitOrderAsync(
+                OrderIntent intent,
+                CancellationToken cancellationToken = default)
+            {
+                SubmittedOrderCalls++;
+                return Task.FromException<OrderSnapshot>(
+                    new InvalidOperationException(
+                        "This test must not submit broker orders."));
+            }
+        }
+
+        // Returns controlled Fibonacci test candles.
+        private sealed class FakeMarketDataService : IMarketDataService
+        {
+            private readonly List<MarketBar> _bars;
+
+            public FakeMarketDataService(List<MarketBar> bars)
+            {
+                _bars = bars;
+            }
+
+            public Task<List<MarketBar>> GetCompletedBarsAsync(
+                string symbol,
+                string timeframe,
+                DateTimeOffset fromUtc,
+                DateTimeOffset toUtc,
+                CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(new List<MarketBar>(_bars));
+            }
         }
 
         // Deterministic market data for Fibonacci detection
