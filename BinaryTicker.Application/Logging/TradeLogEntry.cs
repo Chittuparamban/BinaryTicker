@@ -15,27 +15,18 @@ namespace BinaryTicker.Application.Logging
         public string? ClientOrderId { get; }
         public string? BrokerOrderId { get; }
 
-        public TradeLogEntry(
-            DateTimeOffset timestampUtc,
-            TradeLogLevel level,
-            string eventName,
-            string message,
-            string? symbol = null,
-            string? status = null,
-            string? clientOrderId = null,
-            string? brokerOrderId = null)
+        public TradeLogEntry(DateTimeOffset timestampUtc,TradeLogLevel level,
+            string eventName,string message,string? symbol = null, string? status = null,
+            string? clientOrderId = null, string? brokerOrderId = null)
         {
             if (!Enum.IsDefined(level))
-                throw new ArgumentException(
-                    "Invalid log level.", nameof(level));
+                throw new ArgumentException("Invalid log level.", nameof(level));
 
             if (string.IsNullOrWhiteSpace(eventName))
-                throw new ArgumentException(
-                    "Event name is required.");
+                throw new ArgumentException("Event name is required.");
 
             if (string.IsNullOrWhiteSpace(message))
-                throw new ArgumentException(
-                    "Event message is required.");
+                throw new ArgumentException("Event message is required.");
 
             EventId = Guid.NewGuid();
             TimestampUtc = timestampUtc.ToUniversalTime();

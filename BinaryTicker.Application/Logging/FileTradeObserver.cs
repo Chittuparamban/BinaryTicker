@@ -11,77 +11,96 @@ namespace BinaryTicker.Infrastructure.Logging
 {
     public sealed class FileTradeObserver : IDisposable
     {
-        private readonly BotEventPublisher _publisher;
-        private readonly StreamWriter _writer;
-        private readonly object _lock = new();
+        private BotEventPublisher Publisher { get; }
+        private StreamWriter Writer { get; }
+        private object WriterLock { get; }
+        private JsonSerializerOptions Options { get; }
 
-        private readonly JsonSerializerOptions _options = new()
+        private bool IsDisposed { get; set; }
+
+        public FileTradeObserver( BotEventPublisher publisher, string filePath)
         {
-            Converters = { new JsonStringEnumConverter() }
-        };
+            // Initialize the synchronization object
+            WriterLock = new object();
 
-        private bool _disposed;
+            // Initialize JSON settings
+            Options = new JsonSerializerOptions();
 
-        public FileTradeObserver(
-            BotEventPublisher publisher,
-            string filePath)
-        {
-            _publisher = publisher ??
+            // Store enum values as strings instead of no.s
+            Options.Converters.Add(new JsonStringEnumConverter());
+
+            // Store the publisher
+            if (publisher == null)
+            {
                 throw new ArgumentNullException(nameof(publisher));
+            }
 
+            Publisher = publisher;
+
+            // Validate the file path
             if (string.IsNullOrWhiteSpace(filePath))
-                throw new ArgumentException(
-                    "Log file path is required.");
+            {
+                throw new ArgumentException( "Log file path is required.", nameof(filePath));
+            }
 
+            //  Get the absolute path
             string fullPath = Path.GetFullPath(filePath);
 
+            //  Create the directory if it does not exist
             string directory = Path.GetDirectoryName(fullPath)!;
+
             Directory.CreateDirectory(directory);
 
-            // Append preserves previous log history
-            var stream = new FileStream(
-                fullPath,
-                FileMode.Append,
-                FileAccess.Write,
-                FileShare.Read);
+            // Open the file without deleting previous logs
+            FileStream stream = new FileStream(fullPath,FileMode.Append,FileAccess.Write,FileShare.Read);
 
-            _writer = new StreamWriter(
-                stream,
-                new UTF8Encoding(false))
-            {
-                AutoFlush = true
-            };
+             // Create a writer that uses UTF-8 encoding
+            Writer = new StreamWriter(  stream, new UTF8Encoding(false));
 
-            // Subscribe after opening the file
-            _publisher.TradeEventPublished += OnTradeEvent;
+            // Automatically flush each write to the stream
+            Writer.AutoFlush = true;
+
+            //  Subscribe to trading events
+            Publisher.TradeEventPublished += OnTradeEvent;
         }
 
+        // Called whenever BotEventPublisher publishes an event
         private void OnTradeEvent(TradeLogEntry entry)
         {
-            lock (_lock)
+            lock (WriterLock)
             {
-                if (_disposed)
+            // Do not write after disposal
+                if (IsDisposed)
+                {
                     return;
+                }
 
-                string json = JsonSerializer.Serialize(
-                    entry, _options);
+                // convert the trading event into JSON
+                string json = JsonSerializer.Serialize(entry,Options);
 
-                _writer.WriteLine(json);
+                // Write the JSON as a separate line
+                Writer.WriteLine(json);
             }
         }
 
+        // release resources and unsubscribe from events
         public void Dispose()
         {
-            // Unsubscribe first
-            _publisher.TradeEventPublished -= OnTradeEvent;
+            // stop receiving trading events
+            Publisher.TradeEventPublished -= OnTradeEvent;
 
-            lock (_lock)
+            lock (WriterLock)
             {
-                if (_disposed)
+               // Prevent disposing the writer twice
+                if (IsDisposed)
+                {
                     return;
+                }
 
-                _disposed = true;
-                _writer.Dispose();
+                IsDisposed = true;
+
+     // closes the file and release resources
+                Writer.Dispose();
             }
         }
     }
