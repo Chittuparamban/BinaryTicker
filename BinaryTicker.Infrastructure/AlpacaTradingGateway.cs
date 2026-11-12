@@ -18,140 +18,120 @@ namespace BinaryTicker.Infrastructure
 {
     public sealed class AlpacaTradingGateway : ITradingGateway
     {
-        private readonly IAlpacaTradingClient _client;
-        private readonly AlpacaSettings _settings;
+        // Private properties
+        private IAlpacaTradingClient Client { get; }
+        private AlpacaSettings Settings { get; }
 
-        public AlpacaTradingGateway(
-            IAlpacaTradingClient client,
-            AlpacaSettings settings)
+        public AlpacaTradingGateway(IAlpacaTradingClient client, AlpacaSettings settings)
         {
-            _client = client ??
+            if (client == null)
+            {
                 throw new ArgumentNullException(nameof(client));
+            }
 
-            _settings = settings ??
+            if (settings == null)
+            {
                 throw new ArgumentNullException(nameof(settings));
+            }
 
-            _settings.ValidatePaperEnvironment();
+            Client = client;
+            Settings = settings;
+
+            Settings.ValidatePaperEnvironment();
         }
 
-        // 1. Retrieve account information
-        public async Task<TradingAccountSnapshot> GetAccountAsync(
-            CancellationToken cancellationToken = default)
+        // gets account information
+        public async Task<TradingAccountSnapshot> GetAccountAsync( CancellationToken cancelToken = default)
         {
-            IAccount account = await _client.GetAccountAsync(
-                cancellationToken);
+            IAccount account =
+                await Client.GetAccountAsync(cancelToken);
 
-            decimal buyingPower = account.BuyingPower ??
-                throw new InvalidOperationException(
-                    "Alpaca did not return buying power.");
+            if (account.BuyingPower == null)
+            {
+                throw new InvalidOperationException("Alpaca did not return buying power.");
+            }
 
-            bool canTrade =
-                (account.Status == AccountStatus.Active ||
-                 account.Status == AccountStatus.PaperOnly) &&
-                !account.IsTradingBlocked &&
-                !account.IsAccountBlocked &&
+            decimal buyingPower = account.BuyingPower.Value;
+
+            bool canTrade = (account.Status == AccountStatus.Active || account.Status == AccountStatus.PaperOnly) &&
+                !account.IsTradingBlocked && !account.IsAccountBlocked &&
                 !account.TradeSuspendedByUser;
 
-            return new TradingAccountSnapshot(
-                account.AccountId.ToString(),
-                account.TradableCash,
-                buyingPower,
-                canTrade,
-                _settings.IsPaperTrading,
-                DateTimeOffset.UtcNow);
+            return new TradingAccountSnapshot(account.AccountId.ToString(), account.TradableCash, buyingPower,
+                canTrade, Settings.IsPaperTrading, DateTimeOffset.UtcNow);
         }
 
-        // 2. Retrieve current position
-        public async Task<PositionSnapshot?> GetPositionAsync(
-            string symbol,
-            CancellationToken cancellationToken = default)
+        // get current position
+        public async Task<PositionSnapshot?> GetPositionAsync(string symbol, CancellationToken cancelToken = default)
         {
             symbol = ValidateSymbol(symbol);
 
             try
             {
-                IPosition position =
-                    await _client.GetPositionAsync(
-                        symbol,
-                        cancellationToken);
+                IPosition position = await Client.GetPositionAsync(symbol, cancelToken);
 
                 if (position.Side != PositionSide.Long)
                 {
-                    throw new InvalidOperationException(
-                        "BinaryTicker does not support short positions.");
+                    throw new InvalidOperationException("BinaryTicker does not support short positions.");
                 }
 
-                decimal marketValue = position.MarketValue ??
-                    throw new InvalidOperationException(
-                        "Position market value is unavailable.");
+                if (position.MarketValue == null)
+                {
+                    throw new InvalidOperationException("Position market value is unavailable.");
+                }
 
-                return new PositionSnapshot(
-                    position.Symbol,
-                    position.Quantity,
-                    position.AverageEntryPrice,
-                    marketValue,
-                    DateTimeOffset.UtcNow);
+                decimal marketValue = position.MarketValue.Value;
+
+                return new PositionSnapshot(position.Symbol, position.Quantity, position.AverageEntryPrice,
+                    marketValue, DateTimeOffset.UtcNow);
             }
             catch (RestClientErrorException ex)
                 when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
-                // Confirmed absence of position
+                // Position does not exist
                 return null;
             }
         }
 
-        // 3. Retrieve an order using its client order ID
-        public async Task<OrderSnapshot?>
-            GetOrderByClientOrderIdAsync(
-                string clientOrderId,
-                CancellationToken cancellationToken = default)
+        // Retrieve an order using its client order ID
+        public async Task<OrderSnapshot?> GetOrderByClientOrderIdAsync(string clientOrderId, CancellationToken cancelToken = default)
         {
             if (string.IsNullOrWhiteSpace(clientOrderId))
             {
-                throw new ArgumentException(
-                    "Client order ID is required.",
-                    nameof(clientOrderId));
+                throw new ArgumentException("Client order ID is required.",nameof(clientOrderId));
             }
 
             try
             {
-                // String overload looks up the CLIENT order ID.
-                IOrder order = await _client.GetOrderAsync(
-                    clientOrderId,
-                    cancellationToken);
+                IOrder order = await Client.GetOrderAsync(clientOrderId, cancelToken);
 
                 return ConvertOrder(order);
             }
             catch (RestClientErrorException ex)
                 when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
-                // Not found does not prove a prior POST failed.
+                // Not found does not prove an earlier POST failed
                 return null;
             }
         }
 
-        // 4. Check market opening status
-        public async Task<bool> IsMarketOpenAsync(
-            CancellationToken cancellationToken = default)
+        // Check whether the market is open
+        public async Task<bool> IsMarketOpenAsync( CancellationToken cancellationToken = default)
         {
-            IClock clock = await _client.GetClockAsync(
-                cancellationToken);
+            IClock clock =
+                await Client.GetClockAsync(cancellationToken);
 
             return clock.IsOpen;
         }
 
-        // 5. Check whether the stock is tradable
-        public async Task<bool> IsAssetTradableAsync(
-            string symbol,
-            CancellationToken cancellationToken = default)
+        // Check whether the stock is tradable
+        public async Task<bool> IsAssetTradableAsync(string symbol, CancellationToken cancellationToken = default)
         {
             symbol = ValidateSymbol(symbol);
 
             try
             {
-                IAsset asset = await _client.GetAssetAsync(
-                    symbol,
-                    cancellationToken);
+                IAsset asset = await Client.GetAssetAsync(symbol, cancellationToken);
 
                 return asset.IsTradable;
             }
@@ -162,36 +142,31 @@ namespace BinaryTicker.Infrastructure
             }
         }
 
-        // 6. Check whether another order is already open
-        public async Task<bool> HasOpenOrdersAsync(
-            string symbol,
-            CancellationToken cancellationToken = default)
+        // check whether another order is already open
+        public async Task<bool> HasOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             symbol = ValidateSymbol(symbol);
 
-            ListOrdersRequest request = new ListOrdersRequest
-            {
-                OrderStatusFilter = OrderStatusFilter.Open
-            }.WithSymbol(symbol);
+            ListOrdersRequest request = new ListOrdersRequest();
 
-            var orders = await _client.ListOrdersAsync(
-                request,
-                cancellationToken);
+            request.OrderStatusFilter = OrderStatusFilter.Open;
+            request = request.WithSymbol(symbol);
+
+            var orders = await Client.ListOrdersAsync(request, cancellationToken);
 
             return orders.Count > 0;
         }
 
-        // 7. Submit a Buy or Sell market order
-        public async Task<OrderSnapshot> SubmitOrderAsync(
-            OrderIntent intent,
-            CancellationToken cancellationToken = default)
+        // submits a Buy or Sell market order
+        public async Task<OrderSnapshot> SubmitOrderAsync(OrderIntent intent, CancellationToken cancellationToken = default)
         {
-            if (intent is null)
+            if (intent == null)
             {
                 throw new ArgumentNullException(nameof(intent));
             }
 
-            _settings.ValidatePaperEnvironment();
+            // Only allow paper trading
+            Settings.ValidatePaperEnvironment();
 
             string symbol = ValidateSymbol(intent.Symbol);
 
@@ -201,17 +176,15 @@ namespace BinaryTicker.Infrastructure
                     "Client order ID is required.");
             }
 
-            if (intent.Quantity <= 0 ||
-                intent.Quantity != decimal.Truncate(intent.Quantity) ||
+            if (intent.Quantity <= 0 || intent.Quantity != decimal.Truncate(intent.Quantity) ||
                 intent.Quantity > long.MaxValue)
             {
-                throw new ArgumentException(
-                    "Quantity must be a supported positive whole number.");
+                throw new ArgumentException("Quantity must be a supported positive whole number.");
             }
 
             long quantity = checked((long)intent.Quantity);
 
-            // Convert BinaryTicker's OrderIntent into an SDK order
+            // Convert BinaryTicker order to Alpaca order
             MarketOrder request;
 
             if (intent.Side == DomainOrderSide.Buy)
@@ -224,29 +197,29 @@ namespace BinaryTicker.Infrastructure
             }
             else
             {
-                throw new ArgumentException(
-                    "Unsupported order side.");
+                throw new ArgumentException("Unsupported order side.");
             }
 
-            // Day market order with a stable client order ID
-            request = request
-                .WithDuration(TimeInForce.Day)
-                .WithClientOrderId(intent.ClientOrderId)
-                .WithExtendedHours(false);
+            // Configure a DAY market order
+            request = request.WithDuration(TimeInForce.Day);
 
-            // IMPORTANT:
-            // Submit exactly once. Do not retry an uncertain POST.
-            IOrder submitted = await _client.PostOrderAsync(
-                request,
-                cancellationToken);
+            // Attach the unique client order ID
+            request = request.WithClientOrderId(intent.ClientOrderId);
+
+            // Normal market orders do not use extended hours
+            request = request.WithExtendedHours(false);
+
+            // Submit exactly once to Alpaca Paper
+            // Do not automatically retry an uncertain submission
+            IOrder submitted = await Client.PostOrderAsync( request, cancellationToken);
 
             return ConvertOrder(submitted);
         }
 
-        // 8. Convert Alpaca IOrder into OrderSnapshot
+        // Converts an Alpaca order into a BinaryTicker OrderSnapshot
         private static OrderSnapshot ConvertOrder(IOrder order)
         {
-            if (order is null)
+            if (order == null)
             {
                 throw new ArgumentNullException(nameof(order));
             }
@@ -263,48 +236,57 @@ namespace BinaryTicker.Infrastructure
             }
             else
             {
-                throw new InvalidOperationException(
-                    "Unknown or missing broker order side.");
+                throw new InvalidOperationException("Unknown or missing broker order side.");
             }
 
-            decimal quantity = order.Quantity ??
-                throw new InvalidOperationException(
-                    "Broker order quantity is unavailable.");
+            if (order.Quantity == null)
+            {
+                throw new InvalidOperationException("Broker order quantity is unavailable.");
+            }
 
-            string symbol = order.Symbol ??
-                throw new InvalidOperationException(
-                    "Broker order symbol is unavailable.");
+            decimal quantity = order.Quantity.Value;
 
-            string clientOrderId = order.ClientOrderId ??
-                throw new InvalidOperationException(
-                    "Broker client order ID is unavailable.");
+            if (order.Symbol == null)
+            {
+                throw new InvalidOperationException("Broker order symbol is unavailable.");
+            }
 
-            DateTime updated = order.UpdatedAtUtc
-                ?? order.CreatedAtUtc
-                ?? throw new InvalidOperationException(
-                    "Broker order timestamp is unavailable.");
+            string symbol = order.Symbol;
 
-            DateTimeOffset updatedUtc = new DateTimeOffset(
-                DateTime.SpecifyKind(
-                    updated,
-                    DateTimeKind.Utc));
+            if (order.ClientOrderId == null)
+            {
+                throw new InvalidOperationException("Broker client order ID is unavailable.");
+            }
 
-            return new OrderSnapshot(
-                order.OrderId.ToString(),
-                clientOrderId,
-                symbol,
-                side,
-                quantity,
-                order.FilledQuantity,
-                order.AverageFillPrice,
-                ConvertStatus(order.OrderStatus),
-                order.OrderStatus.ToString(),
-                updatedUtc);
+            string clientOrderId = order.ClientOrderId;
+
+            DateTime updated;
+
+            if (order.UpdatedAtUtc != null)
+            {
+                updated = order.UpdatedAtUtc.Value;
+            }
+            else if (order.CreatedAtUtc != null)
+            {
+                updated = order.CreatedAtUtc.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException("Broker order timestamp is unavailable.");
+            }
+
+            DateTime utcDateTime = DateTime.SpecifyKind(updated, DateTimeKind.Utc);
+
+            DateTimeOffset updatedUtc = new DateTimeOffset(utcDateTime);
+
+            return new OrderSnapshot(order.OrderId.ToString(), clientOrderId, symbol,
+                side, quantity, order.FilledQuantity,
+                order.AverageFillPrice, ConvertStatus(order.OrderStatus),
+                order.OrderStatus.ToString(), updatedUtc);
         }
 
         // 9. Convert Alpaca status to BinaryTicker status
-        private static AppOrderStatus ConvertStatus(
-            SdkOrderStatus status)
+        private static AppOrderStatus ConvertStatus(SdkOrderStatus status)
         {
             switch (status)
             {
@@ -339,14 +321,12 @@ namespace BinaryTicker.Infrastructure
             }
         }
 
-        // 10. Shared symbol validation
+        // 10. Validate and normalize the stock symbol
         private static string ValidateSymbol(string symbol)
         {
             if (string.IsNullOrWhiteSpace(symbol))
             {
-                throw new ArgumentException(
-                    "Stock symbol is required.",
-                    nameof(symbol));
+                throw new ArgumentException("Stock symbol is required.",nameof(symbol));
             }
 
             return symbol.Trim().ToUpperInvariant();

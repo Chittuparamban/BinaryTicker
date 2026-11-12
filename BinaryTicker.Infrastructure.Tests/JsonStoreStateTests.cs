@@ -15,26 +15,15 @@ namespace BinaryTicker.Infrastructure.Tests
         [Test]
         public async Task SaveAndLoad_PreservesPendingOrder()
         {
-            string directory = Path.Combine(
-                Path.GetTempPath(),
-                "BinaryTickerTests",
-                Guid.NewGuid().ToString("N"));
+            string directory = Path.Combine(Path.GetTempPath(),"BinaryTickerTests",Guid.NewGuid().ToString("N"));
 
             string path = Path.Combine(directory, "state.json");
 
             try
             {
-                TradeState state = TradeState.CreateNew(
-                    "test-account",
-                    "AAPL",
-                    "1Min",
-                    "fib-v1");
+                TradeState state = TradeState.CreateNew("test-account","AAPL","1Min","fib-v1");
 
-                OrderIntent order = new OrderIntent(
-                    "AAPL",
-                    OrderSide.Buy,
-                    2m,
-                    "test-order-001");
+                OrderIntent order = new OrderIntent("AAPL", OrderSide.Buy,  2m, "test-order-001");
 
                 state = state.WithPendingOrder(order);
 
@@ -48,23 +37,15 @@ namespace BinaryTicker.Infrastructure.Tests
                 using (var store = new JsonStateStore(path))
                 {
                     TradeState? restored = await store.LoadAsync(
-                        "test-account",
-                        "AAPL",
-                        "1Min",
-                        "fib-v1");
+                        "test-account", "AAPL", "1Min", "fib-v1");
 
                     Assert.That(restored, Is.Not.Null);
 
-                    Assert.That(
-                        restored!.PendingOrder, Is.Not.Null);
+                    Assert.That(restored!.PendingOrder, Is.Not.Null);
 
-                    Assert.That(
-                        restored.PendingOrder!.ClientOrderId,
-                        Is.EqualTo("test-order-001"));
+                    Assert.That(restored.PendingOrder!.ClientOrderId,Is.EqualTo("test-order-001"));
 
-                    Assert.That(
-                        restored.PendingOrder.Quantity,
-                        Is.EqualTo(2m));
+                    Assert.That(restored.PendingOrder.Quantity,Is.EqualTo(2m));
                 }
             }
             finally

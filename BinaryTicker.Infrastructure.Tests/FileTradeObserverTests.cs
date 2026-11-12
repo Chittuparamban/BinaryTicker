@@ -12,49 +12,35 @@ namespace BinaryTicker.Infrastructure.Tests
     public class FileTradeObserverTests
     {
         [Test]
-        public void PublishedEvents_AreAppendedToFile()
+        public void PublishedEvents_AreAppendedtoFile()
         {
-            string directory = Path.Combine(
-                Path.GetTempPath(),
-                "BinaryTickerTests",
-                Guid.NewGuid().ToString("N"));
+            string directory = Path.Combine( Path.GetTempPath(),
+                "BinaryTickerTests",Guid.NewGuid().ToString("N"));
 
-            string path = Path.Combine(
-                directory, "events.jsonl");
+            string path = Path.Combine(directory, "events.jsonl");
 
             try
             {
-                BotEventPublisher publisher =
-                    new BotEventPublisher();
+                BotEventPublisher publisher = new BotEventPublisher();
 
-                using (var observer =
-                    new FileTradeObserver(publisher, path))
+                using (var observer = new FileTradeObserver(publisher, path))
                 {
-                    publisher.Publish(new TradeLogEntry(
-                        DateTimeOffset.UtcNow,
-                        TradeLogLevel.Information,
-                        "BotStarted",
-                        "Bot started successfully."));
+                    publisher.Publish(new TradeLogEntry(  DateTimeOffset.UtcNow,
+                        TradeLogLevel.Information,"BotStarted","Bot started successfully."));
                 }
 
                 // Simulate restarting the observer
-                using (var observer =
-                    new FileTradeObserver(publisher, path))
+                using (var observer = new FileTradeObserver(publisher, path))
                 {
-                    publisher.Publish(new TradeLogEntry(
-                        DateTimeOffset.UtcNow,
-                        TradeLogLevel.Information,
-                        "BotStopped",
-                        "Bot stopped successfully."));
+                    publisher.Publish(new TradeLogEntry(DateTimeOffset.UtcNow,
+                        TradeLogLevel.Information,"BotStopped", "Bot stopped successfully."));
                 }
 
                 string[] lines = File.ReadAllLines(path);
 
                 Assert.That(lines, Has.Length.EqualTo(2));
-                Assert.That(lines[0],
-                    Does.Contain("BotStarted"));
-                Assert.That(lines[1],
-                    Does.Contain("BotStopped"));
+                Assert.That(lines[0],Does.Contain("BotStarted"));
+                Assert.That(lines[1],Does.Contain("BotStopped"));
             }
             finally
             {
