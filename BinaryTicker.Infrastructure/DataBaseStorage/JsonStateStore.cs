@@ -42,12 +42,8 @@ namespace BinaryTicker.Infrastructure.DatabaseStorage
                 FileShare.None);
         }
 
-        public async Task<TradeState?> LoadAsync(
-            string accountId,
-            string symbol,
-            string timeframe,
-            string strategyVersion,
-            CancellationToken cancellationToken = default)
+        public async Task<TradeState?> LoadAsync(string accountId,string symbol,string timeframe,
+            string strategyVersion,CancellationToken cancellationToken = default)
         {
             await _gate.WaitAsync(cancellationToken);
 
@@ -56,12 +52,9 @@ namespace BinaryTicker.Infrastructure.DatabaseStorage
                 if (!File.Exists(_filePath))
                     return null;
 
-                string json = await File.ReadAllTextAsync(
-                    _filePath, cancellationToken);
+                string json = await File.ReadAllTextAsync(_filePath, cancellationToken);
 
-                TradeState state =
-                    JsonSerializer.Deserialize<TradeState>(
-                        json, _options)
+                TradeState state =JsonSerializer.Deserialize<TradeState>(json, _options)
                     ?? throw new InvalidDataException(
                         "Saved trading state is empty.");
 
