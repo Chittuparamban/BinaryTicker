@@ -286,7 +286,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             TradeSignal signal = Strategy.Evaluate(bars,heldQuantity,activeSetup);
 
             // save completed candle and setup
-            state = state.WithEvaluation(latest.CloseTimeUtc,signal.ActiveSetup);
+            state = state.WithEvaluation(latest.CloseTimeUtc, signal.ActiveSetup);
 
             await Store.SaveAsync(state, ct);
 
