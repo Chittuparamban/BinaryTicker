@@ -9,69 +9,99 @@ namespace BinaryTicker
 {
     public sealed class ConsoleTradeObserver : IDisposable
     {
-        private readonly BotEventPublisher _publisher;
-        private readonly TextWriter _output;
-        private readonly object _lock = new();
+        // private properties
+        private BotEventPublisher Publisher { get; }
+        private TextWriter Output { get; }
+        private object WriterLock { get; }
+        private bool IsDisposed { get; set; }
 
-        private bool _disposed;
-
-        public ConsoleTradeObserver(
-            BotEventPublisher publisher,
-            TextWriter output)
+        public ConsoleTradeObserver(BotEventPublisher publisher,TextWriter output)
         {
-            _publisher = publisher ??
+            
+            WriterLock = new object();
+
+            // Validate and assign publisher
+            if (publisher == null)
+            {
                 throw new ArgumentNullException(nameof(publisher));
+            }
+            Publisher = publisher;
 
-            _output = output ??
+            // Validate and assign output
+            if (output == null)
+            {
                 throw new ArgumentNullException(nameof(output));
+            }
+            Output = output;
 
-            // Subscribe to publisher
-            _publisher.TradeEventPublished += OnTradeEvent;
+            // Subscribe to publisher events
+            Publisher.TradeEventPublished += OnTradeEvent;
         }
 
+        // Called whenever a trading event is published
         private void OnTradeEvent(TradeLogEntry entry)
         {
-            lock (_lock)
+            lock (WriterLock)
             {
-                if (_disposed)
-                    return;
-
-                List<string> details = new List<string>
+                if (IsDisposed)
                 {
-                    entry.TimestampUtc.ToString("O"),
-                    $"Level: {entry.Level}",
-                    $"Event: {entry.EventName}",
-                    $"Message: {entry.Message}"
-                };
+                    return;
+                }
 
-                if (entry.Symbol is not null)
+                List<string> details = new List<string>();
+
+                details.Add(entry.TimestampUtc.ToString("O"));
+                details.Add($"Level: {entry.Level}");
+                details.Add($"Event: {entry.EventName}");
+                details.Add($"Message: {entry.Message}");
+
+                if (entry.Symbol != null)
+                {
                     details.Add($"Symbol: {entry.Symbol}");
+                }
 
-                if (entry.Status is not null)
+                if (entry.Status != null)
+                {
                     details.Add($"Status: {entry.Status}");
+                }
 
-                if (entry.ClientOrderId is not null)
+                if (entry.ClientOrderId != null)
+                {
                     details.Add(
                         $"ClientOrderId: {entry.ClientOrderId}");
+                }
 
-                if (entry.BrokerOrderId is not null)
+                if (entry.BrokerOrderId != null)
+                {
                     details.Add(
                         $"BrokerOrderId: {entry.BrokerOrderId}");
+                }
 
-                _output.WriteLine(string.Join(" | ", details));
-                _output.Flush();
+                // Write formatted event to the console
+                Output.WriteLine(string.Join(" || ", details));
+
+                // Flush buffered output
+                Output.Flush();
             }
         }
 
         public void Dispose()
         {
-            // Unsubscribe to prevent further notifications
-            _publisher.TradeEventPublished -= OnTradeEvent;
+            // Unsubscribe from events
+            Publisher.TradeEventPublished -= OnTradeEvent;
 
-            lock (_lock)
+            lock (WriterLock)
             {
-                _disposed = true;
+                if (IsDisposed)
+                {
+                    return;
+                }
+
+                IsDisposed = true;
             }
+
+            // Output is owned by the caller.
+            // Don'tt dispose Console.Out here.
         }
     }
 }
