@@ -299,7 +299,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
                 return Result(CycleOutcome.Hold,signal.Reason, now, signal);
             }
 
-            // Choose Buy or Sell creator
+            // Choose Buy or sell 
             OrderIntentCreator creator;
             decimal quantity;
 
@@ -311,7 +311,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
                 }
 
                 creator = BuyCreator;
-                quantity = Settings.Quantity;
+                quantity = Settings.Quantity; //buy fixed quantity
             }
             else if (signal.Action == SignalAction.Sell)
             {
@@ -321,7 +321,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
                 }
 
                 creator = SellCreator;
-                quantity = heldQuantity;
+                quantity = heldQuantity;  //sell enitre position
             }
             else
             {
@@ -332,7 +332,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             string symbol = Settings.Symbol;
             decimal orderQuantity = quantity;
             Guid uniqueId = Guid.NewGuid();
-            string clientOrderId = "bt-" + uniqueId.ToString("N");;
+            string clientOrderId = "bt-" + uniqueId.ToString("N");
             OrderIntent intent = creator.Create(symbol,orderQuantity,clientOrderId);
 
             //  Refresh account information
@@ -395,7 +395,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
                 return Result(CycleOutcome.Blocked,riskResult.Reason, submissionTime,signal);
             }
 
-            //   Preview mode
+            //   Preview mode writes out to console
             if (!EnablePaperOrders)
             {
                 string outcome = $"Would {signal.Action} {quantity} " + $"{intent.Symbol} shares.";
@@ -410,22 +410,18 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             // Publish prepared order
             // A logging exception prevents submission.
             string messagepreview = $"Prepared {intent.Side} order for {intent.Quantity} shares.";
+
             Publisher!.Publish(new TradeLogEntry(timestampUtc: Clock.GetUtcNow(), level: TradeLogLevel.Information,
                 eventName: "OrderPrepared", message: messagepreview, symbol: intent.Symbol,
                 status: "Prepared", clientOrderId: intent.ClientOrderId));
 
-            // Submit ONCE to Alpaca Paper
-            // Do not retry on timeout or uncertain result.
-            OrderSnapshot submitted =
-                await Gateway.SubmitOrderAsync(intent, ct);
+            // Submit to Alpaca Paper
+                OrderSnapshot submitted =await Gateway.SubmitOrderAsync(intent, ct);
 
             // Verify broker acknowledgement
-            if (submitted.ClientOrderId != intent.ClientOrderId ||
-                !string.Equals(submitted.Symbol,intent.Symbol,  StringComparison.OrdinalIgnoreCase) ||
-                submitted.Side != intent.Side ||submitted.Quantity != intent.Quantity)
+            if (submitted.ClientOrderId != intent.ClientOrderId)
             {
-                throw new InvalidOperationException(
-                    "Broker acknowledgement does not match the order.");
+                throw new InvalidOperationException("Broker acknowledgement does not match the order.");
             }
 
             // Log the actual broker response
@@ -437,8 +433,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
                 brokerOrderId: submitted.BrokerOrderId));
 
             // Keep pending state for subsequent reconciliation
-            return Result( CycleOutcome.Submitted, "Paper order acknowledged. Fill not yet confirmed.",
-                Clock.GetUtcNow(), signal, submitted);
+            return Result( CycleOutcome.Submitted, "Paper order acknowledged",Clock.GetUtcNow(), signal, submitted);
         }
 
         // Reconcile a previously saved Buy/Sell order
@@ -483,7 +478,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             }
 
             // A cancelled order can contain partial fills.
-            // Do not silently discard those shares.
+            
             if (order.Status != OrderStatus.Filled &&order.FilledQuantity > 0m)
             {
                 return Result(

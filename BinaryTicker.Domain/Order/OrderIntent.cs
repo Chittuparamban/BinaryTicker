@@ -15,8 +15,7 @@ namespace BinaryTicker.Domain.Order
             if (string.IsNullOrWhiteSpace(symbol))
                 throw new ArgumentException("Symbol is required.");
 
-            if (quantity <= 0 || quantity != decimal.Truncate(quantity) ||
-                quantity > long.MaxValue)
+            if (quantity <= 0 || quantity != decimal.Truncate(quantity) || quantity > long.MaxValue)
                 throw new ArgumentException("Quantity must be a positive whole number.");
 
             if (!Enum.IsDefined(side))
