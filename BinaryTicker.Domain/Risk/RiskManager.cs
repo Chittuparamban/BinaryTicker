@@ -6,15 +6,9 @@ namespace BinaryTicker.Domain.Risk
 {
     public class RiskManager
     {
-        public (bool Allowed, string Reason) Validate(
-            OrderIntent intent,
-            RiskLimits limits,
-            decimal marketPrice,
-            decimal availableBuyingPower,
-            decimal heldQuantity,
-            decimal currentPositionValue,
-            decimal reservedSellQuantity,
-            bool canTrade,
+        public (bool Allowed, string Reason) Validate( OrderIntent intent,  RiskLimits limits,
+            decimal marketPrice, decimal availableBuyingPower, decimal heldQuantity,
+            decimal currentPositionValue, decimal reservedSellQuantity, bool canTrade,
             bool isMarketOpen)
         {
             if (intent is null)
@@ -29,9 +23,7 @@ namespace BinaryTicker.Domain.Risk
             if (marketPrice <= 0)
                 return (false, "Invalid market price.");
 
-            if (availableBuyingPower < 0 ||
-                heldQuantity < 0 ||
-                currentPositionValue < 0 ||
+            if (availableBuyingPower < 0 || heldQuantity < 0 ||currentPositionValue < 0 ||
                 reservedSellQuantity < 0)
                 return (false, "Invalid account or position values.");
 
@@ -44,21 +36,19 @@ namespace BinaryTicker.Domain.Risk
             // BUY ORDER
             if (intent.Side == OrderSide.Buy)
             {
-                decimal estimatedOrderValue =
-                    intent.Quantity * marketPrice *
-                    (1 + limits.PriceBufferFraction);
+                decimal estimatedOrderValue =intent.Quantity * marketPrice *(1 + limits.PriceBufferFrac);
 
-                if (intent.Quantity > limits.MaxQuantity)
+                if (intent.Quantity > limits.MaxQty)
                     return (false, "Order quantity exceeds limit.");
 
-                if (estimatedOrderValue > limits.MaxOrderValue)
+                if (estimatedOrderValue > limits.MaxOrderVal)
                     return (false, "Order value exceeds limit.");
 
                 if (estimatedOrderValue > availableBuyingPower)
                     return (false, "Insufficient buying power.");
 
                 if (currentPositionValue + estimatedOrderValue >
-                    limits.MaxPositionValue)
+                    limits.MaxPosVal)
                     return (false, "Position value would exceed limit.");
 
                 return (true, "Buy order passed risk validation.");
@@ -70,8 +60,7 @@ namespace BinaryTicker.Domain.Risk
                 if (reservedSellQuantity > heldQuantity)
                     return (false, "Invalid reserved sell quantity.");
 
-                decimal availableShares =
-                    heldQuantity - reservedSellQuantity;
+                decimal availableShares = heldQuantity - reservedSellQuantity;
 
                 if (intent.Quantity > availableShares)
                     return (false, "Insufficient available shares.");

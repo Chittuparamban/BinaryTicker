@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+
 using BinaryTicker.Application.Interfaces;
 using BinaryTicker.Application.Trading;
 
@@ -12,117 +13,134 @@ namespace BinaryTicker.Infrastructure.DatabaseStorage
 {
     public sealed class JsonStateStore : ITradeStateStore, IDisposable
     {
-        private readonly string _filePath;
-        private readonly FileStream _ownershipLock;
-        private readonly SemaphoreSlim _gate = new(1, 1);
+        private string Filepath { get; }
 
-        private readonly JsonSerializerOptions _options = new()
+        private SemaphoreSlim UpdateGate { get; }
+        private JsonSerializerOptions Options { get; }
+
+        public JsonStateStore(string filepath)
         {
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
 
-        public JsonStateStore(string filePath)
-        {
-            if (string.IsNullOrWhiteSpace(filePath))
-                throw new ArgumentException(
-                    "State file path is required.");
+            
+            Filepath = Path.GetFullPath(filepath);
 
-            _filePath = Path.GetFullPath(filePath);
+            //Create the directory 
+            string directory = Path.GetDirectoryName(Filepath)!;
 
-            string directory = Path.GetDirectoryName(_filePath)!;
             Directory.CreateDirectory(directory);
 
-            // Prevent two cooperating processes from
-            // owning the same state file.
-            _ownershipLock = new FileStream(
-                _filePath + ".lock",
-                FileMode.OpenOrCreate,
-                FileAccess.ReadWrite,
-                FileShare.None);
+            // Initialize the semaphore
+            UpdateGate = new SemaphoreSlim(1, 1);
+
+            // STEP 5: Initialize JSON options
+            Options = new JsonSerializerOptions();
+
+            Options.WriteIndented = true;
+
+            Options.Converters.Add(new JsonStringEnumConverter());
         }
 
-        public async Task<TradeState?> LoadAsync(string accountId,string symbol,string timeframe,
-            string strategyVersion,CancellationToken cancellationToken = default)
+
+        // Load the saved trading state
+        public async Task<TradeState?> LoadAsync(
+            string accountId,
+            string symbol,
+            string timeframe,
+            string strategyVersion,
+            CancellationToken cancelToken = default)
         {
-            await _gate.WaitAsync(cancellationToken);
+            // Prevent simultaneous access
+            await UpdateGate.WaitAsync(cancelToken);
 
             try
             {
-                if (!File.Exists(_filePath))
-                    return null;
-
-                string json = await File.ReadAllTextAsync(_filePath, cancellationToken);
-
-                TradeState state =JsonSerializer.Deserialize<TradeState>(json, _options)
-                    ?? throw new InvalidDataException(
-                        "Saved trading state is empty.");
-
-                // Never load another account or strategy's state.
-                if (state.AccountId != accountId ||
-                    state.Symbol != symbol.Trim().ToUpperInvariant() ||
-                    state.Timeframe != timeframe ||
-                    state.StrategyVersion != strategyVersion)
+                // Return null if no saved file exists
+                if (!File.Exists(Filepath))
                 {
-                    throw new InvalidDataException(
-                        "Saved state does not match this bot.");
+                    return null;
+                }
+
+                // Read JSON from the file
+                string json = await File.ReadAllTextAsync(Filepath,cancelToken);
+
+                // Convert JSON into a TradeState object
+                TradeState? state = JsonSerializer.Deserialize<TradeState>(json,Options);
+
+                if (state == null)
+                {
+                    throw new InvalidDataException("Saved trading state is empty.");
+                }
+
+                // Ensure the state belongs to this bot
+                if (state.AccountId != accountId || state.Symbol != symbol.Trim().ToUpperInvariant() ||
+                    state.Timeframe != timeframe ||state.StrategyVersion != strategyVersion)
+                {
+                    throw new InvalidDataException( "Saved state does not match this bot.");
                 }
 
                 return state;
             }
             finally
             {
-                _gate.Release();
+                // Release the semaphore
+                UpdateGate.Release();
             }
         }
 
-        public async Task SaveAsync(
-            TradeState state,
-            CancellationToken cancellationToken = default)
+        // Save the latest trading state
+        public async Task SaveAsync(TradeState state,CancellationToken cancelToken = default)
         {
-            if (state is null)
+            // STEP 1: Validate the state
+            if (state == null)
+            {
                 throw new ArgumentNullException(nameof(state));
+            }
 
-            await _gate.WaitAsync(cancellationToken);
+            // STEP 2: Wait for exclusive access
+            await UpdateGate.WaitAsync(cancelToken);
 
-            string temporaryPath =
-                _filePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            // STEP 3: Create a unique temporary file path
+            string temporaryPath = Filepath + "." + Guid.NewGuid().ToString("N") +".tmp";
 
             try
             {
-                await using (FileStream stream = new FileStream(
-                    temporaryPath,
-                    FileMode.CreateNew,
-                    FileAccess.Write,
-                    FileShare.None,
-                    4096,
-                    FileOptions.WriteThrough))
+                // STEP 4: Write the state to a temporary file
+                await using (FileStream stream = new FileStream(temporaryPath, FileMode.CreateNew,
+                    FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
                 {
-                    await JsonSerializer.SerializeAsync(
-                        stream, state, _options, cancellationToken);
+                    await JsonSerializer.SerializeAsync(stream,state,Options,cancelToken);
 
-                    await stream.FlushAsync(cancellationToken);
+                    // Flush buffered data
+                    await stream.FlushAsync(cancelToken);
+
+                    // Request a flush to disk
                     stream.Flush(flushToDisk: true);
                 }
 
-                cancellationToken.ThrowIfCancellationRequested();
+                // STEP 5: Check cancellation before replacing
+                cancelToken.ThrowIfCancellationRequested();
 
-                // Replace the state only after the new file is written.
-                File.Move(temporaryPath, _filePath, true);
+                // STEP 6: Replace the original state file
+                File.Move(temporaryPath, Filepath,true);
             }
             finally
             {
+                // Delete the temporary file if it still exists
                 if (File.Exists(temporaryPath))
+                {
                     File.Delete(temporaryPath);
+                }
 
-                _gate.Release();
+                // Release the semaphore
+                UpdateGate.Release();
             }
         }
 
+        // Release resources
         public void Dispose()
         {
-            _ownershipLock.Dispose();
-            _gate.Dispose();
+            // Release the semaphore
+            UpdateGate.Dispose();
         }
     }
 }

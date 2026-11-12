@@ -27,14 +27,12 @@ namespace BinaryTicker.Domain.Fibonacci
         public void Validate()
         {
             if (LeftBars <= 0 || RightBars <= 0)
-                throw new ArgumentException(
-                    "Pivot widths must be positive.");
+                throw new ArgumentException("Pivot widths must be positive.");
 
             if (ZoneStartRatio <= 0 ||
                 ZoneEndRatio >= 1 ||
                 ZoneStartRatio >= ZoneEndRatio)
-                throw new ArgumentException(
-                    "Invalid Fibonacci retracement zone.");
+                throw new ArgumentException("Invalid Fibonacci retracement zone.");
         }
     }
 }

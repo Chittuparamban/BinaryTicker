@@ -11,21 +11,14 @@ namespace BinaryTicker.Domain.Tests
     [TestFixture]
     public class FibonacciStrategyTests
     {
-        private static readonly DateTimeOffset Start =
-            new DateTimeOffset(
-                2026, 11, 9, 14, 0, 0, TimeSpan.Zero);
+        private static readonly DateTimeOffset Start = new DateTimeOffset( 2026, 11, 9, 14, 0, 0, TimeSpan.Zero);
 
         private static FibonacciRetracementStrategy
             CreateStrategy()
         {
-            FibonacciSettings settings =
-                new FibonacciSettings(
-                    1, 1, 0.382m, 0.618m);
+            FibonacciSettings settings = new FibonacciSettings( 1, 1, 0.382m, 0.618m);
 
-            return new FibonacciRetracementStrategy(
-                new SwingDetector(),
-                new FibonacciCalc(),
-                settings);
+            return new FibonacciRetracementStrategy(new SwingDetector(),new FibonacciCalc(), settings);
         }
 
         [Test]
@@ -47,11 +40,9 @@ namespace BinaryTicker.Domain.Tests
 
             var strategy = CreateStrategy();
 
-            TradeSignal signal =
-                strategy.Evaluate(bars, 0m, null);
+            TradeSignal signal = strategy.Evaluate(bars, 0m, null);
 
-            Assert.That(signal.Action,
-                Is.EqualTo(SignalAction.Buy));
+            Assert.That(signal.Action, Is.EqualTo(SignalAction.Buy));
 
             Assert.That(signal.ActiveSetup, Is.Not.Null);
         }
@@ -69,11 +60,9 @@ namespace BinaryTicker.Domain.Tests
 
             var strategy = CreateStrategy();
 
-            TradeSignal signal =
-                strategy.Evaluate(bars, 2m, setup);
+            TradeSignal signal =strategy.Evaluate(bars, 2m, setup);
 
-            Assert.That(signal.Action,
-                Is.EqualTo(SignalAction.Sell));
+            Assert.That(signal.Action,Is.EqualTo(SignalAction.Sell));
         }
 
         [Test]
@@ -89,52 +78,28 @@ namespace BinaryTicker.Domain.Tests
 
             var strategy = CreateStrategy();
 
-            TradeSignal signal =
-                strategy.Evaluate(bars, 0m, setup);
+            TradeSignal signal =strategy.Evaluate(bars, 0m, setup);
 
-            Assert.That(signal.Action,
-                Is.EqualTo(SignalAction.Hold));
+            Assert.That(signal.Action, Is.EqualTo(SignalAction.Hold));
 
-            Assert.That(signal.ActiveSetup,
-                Is.SameAs(setup));
+            Assert.That(signal.ActiveSetup,Is.SameAs(setup));
         }
 
         private static FibonacciLevels CreateSetup()
         {
-            SwingPoint low = new SwingPoint(
-                SwingType.Low,
-                100m,
-                Start,
-                Start.AddMinutes(2));
+            SwingPoint low = new SwingPoint(SwingType.Low,   100m, Start,Start.AddMinutes(2));
 
-            SwingPoint high = new SwingPoint(
-                SwingType.High,
-                200m,
-                Start.AddMinutes(5),
-                Start.AddMinutes(7));
+            SwingPoint high = new SwingPoint(SwingType.High,200m,Start.AddMinutes(5),Start.AddMinutes(7));
 
-            return new FibonacciCalc()
-                .Calculate(low, high);
+            return new FibonacciCalc().Calculate(low, high);
         }
 
-        private static MarketBar Bar(
-            int minute,
-            decimal low,
-            decimal high,
-            decimal close)
+        private static MarketBar Bar(int minute,decimal low,decimal high,decimal close)
         {
-            DateTimeOffset openTime =
-                Start.AddMinutes(minute);
+            DateTimeOffset openTime =Start.AddMinutes(minute);
 
-            return new MarketBar(
-                "AAPL",
-                openTime,
-                openTime.AddMinutes(1),
-                close,
-                high,
-                low,
-                close,
-                1000m);
+            return new MarketBar("AAPL", openTime, openTime.AddMinutes(1), close, high, low,
+                close, 1000m);
         }
     }
 }

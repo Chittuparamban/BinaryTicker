@@ -5,43 +5,35 @@ namespace BinaryTicker.Domain.Risk
 {
     public sealed class RiskLimits
     {
-        public decimal MaxOrderValue { get; }
-        public decimal MaxQuantity { get; }
-        public decimal MaxPositionValue { get; }
-        public decimal PriceBufferFraction { get; }
+        public decimal MaxOrderVal { get; }
+        public decimal MaxQty { get; }
+        public decimal MaxPosVal { get; }
+        public decimal PriceBufferFrac { get; }
 
-        public RiskLimits(
-            decimal maxOrderValue,
-            decimal maxQuantity,
-            decimal maxPositionValue,
-            decimal priceBufferFraction)
+        public RiskLimits( decimal maxOrderValue,decimal maxQuantity,
+            decimal maxPositionValue, decimal priceBufferFraction)
         {
-            MaxOrderValue = maxOrderValue;
-            MaxQuantity = maxQuantity;
-            MaxPositionValue = maxPositionValue;
-            PriceBufferFraction = priceBufferFraction;
+            MaxOrderVal = maxOrderValue;
+            MaxQty = maxQuantity;
+            MaxPosVal = maxPositionValue;
+            PriceBufferFrac = priceBufferFraction;
 
             Validate();
         }
 
         public void Validate()
         {
-            if (MaxOrderValue <= 0)
-                throw new ArgumentException(
-                    "Maximum order value must be positive.");
+            if (MaxOrderVal <= 0)
+                throw new ArgumentException("Maximum order value must be positive.");
 
-            if (MaxQuantity <= 0 ||
-                MaxQuantity != decimal.Truncate(MaxQuantity))
-                throw new ArgumentException(
-                    "Maximum quantity must be a positive whole number.");
+            if (MaxQty <= 0 || MaxQty != decimal.Truncate(MaxQty))
+                throw new ArgumentException("Maximum quantity must be a positive whole number.");
 
-            if (MaxPositionValue <= 0)
-                throw new ArgumentException(
-                    "Maximum position value must be positive.");
+            if (MaxPosVal <= 0)
+                throw new ArgumentException("Maximum position value must be positive.");
 
-            if (PriceBufferFraction < 0)
-                throw new ArgumentException(
-                    "Price buffer cannot be negative.");
+            if (PriceBufferFrac < 0)
+                throw new ArgumentException("Price buffer cannot be negative.");
         }
     }
 }

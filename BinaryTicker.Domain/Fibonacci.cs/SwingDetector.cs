@@ -25,25 +25,20 @@ namespace BinaryTicker.Domain.Fibonacci
             for (int i = 0; i < bars.Count; i++)
             {
                 if (bars[i] is null)
-                    throw new ArgumentException(
-                        "Market bars cannot contain null.");
+                    throw new ArgumentException("Market bars cannot contain null.");
 
                 if (i > 0)
                 {
                     if (bars[i].OpenTimeUtc <= bars[i - 1].OpenTimeUtc)
-                        throw new ArgumentException(
-                            "Market bars must be sorted and unique.");
+                        throw new ArgumentException("Market bars must be sorted and unique.");
 
                     if (bars[i].Symbol != bars[0].Symbol)
-                        throw new ArgumentException(
-                            "Market bars must belong to one symbol.");
+                        throw new ArgumentException("Market bars must belong to one symbol.");
                 }
             }
 
             // Examine candidates with enough left and right bars
-            for (int i = settings.LeftBars;
-                 i < bars.Count - settings.RightBars;
-                 i++)
+            for (int i = settings.LeftBars; i < bars.Count - settings.RightBars;i++)
             {
                 MarketBar candidate = bars[i];
 
@@ -51,9 +46,7 @@ namespace BinaryTicker.Domain.Fibonacci
                 bool isLow = true;
 
                 // Compare against neighbouring candles
-                for (int j = i - settings.LeftBars;
-                     j <= i + settings.RightBars;
-                     j++)
+                for (int j = i - settings.LeftBars; j <= i + settings.RightBars;  j++)
                 {
                     if (j == i)
                         continue;
@@ -86,14 +79,9 @@ namespace BinaryTicker.Domain.Fibonacci
                 }
 
                 // The last right-side candle confirms the pivot
-                DateTimeOffset confirmedAt =
-                    bars[i + settings.RightBars].CloseTimeUtc;
+                DateTimeOffset confirmedAt = bars[i + settings.RightBars].CloseTimeUtc;
 
-                SwingPoint point = new SwingPoint(
-                    type,
-                    price,
-                    candidate.OpenTimeUtc,
-                    confirmedAt);
+                SwingPoint point = new SwingPoint( type,price,candidate.OpenTimeUtc,confirmedAt);
 
                 swingPoints.Add(point);
             }

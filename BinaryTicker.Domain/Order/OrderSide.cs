@@ -2,7 +2,6 @@ namespace BinaryTicker.Domain.Order
 {
     public enum OrderSide
     {
-        Buy,
-        Sell
+        Buy, Sell
     }
 }

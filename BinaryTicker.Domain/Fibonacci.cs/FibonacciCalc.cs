@@ -6,9 +6,7 @@ namespace BinaryTicker.Domain.Fibonacci
 {
     public class FibonacciCalc
     {
-        public FibonacciLevels Calculate(
-            SwingPoint low,
-            SwingPoint high)
+        public FibonacciLevels Calculate(SwingPoint low,SwingPoint high)
         {
             if (low is null)
                 throw new ArgumentNullException(nameof(low));
@@ -17,25 +15,20 @@ namespace BinaryTicker.Domain.Fibonacci
                 throw new ArgumentNullException(nameof(high));
 
             if (low.Type != SwingType.Low)
-                throw new ArgumentException(
-                    "First point must be a swing low.");
+                throw new ArgumentException("First point must be a swing low.");
 
             if (high.Type != SwingType.High)
-                throw new ArgumentException(
-                    "Second point must be a swing high.");
+                throw new ArgumentException("Second point must be a swing high.");
 
             if (low.PivotTimeUtc >= high.PivotTimeUtc)
-                throw new ArgumentException(
-                    "Swing high must occur after swing low.");
+                throw new ArgumentException("Swing high must occur after swing low.");
 
             if (high.Price <= low.Price)
-                throw new ArgumentException(
-                    "Swing high must be greater than swing low.");
+                throw new ArgumentException("Swing high must be greater than swing low.");
 
             decimal range = high.Price - low.Price;
 
-            Dictionary<decimal, decimal> prices =
-                new Dictionary<decimal, decimal>();
+            Dictionary<decimal, decimal> prices = new Dictionary<decimal, decimal>();
 
             prices.Add(0.236m, high.Price - range * 0.236m);
             prices.Add(0.382m, high.Price - range * 0.382m);

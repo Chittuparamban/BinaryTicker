@@ -24,27 +24,18 @@ namespace BinaryTicker.Domain.Fibonacci
             if (prices is null)
                 throw new ArgumentNullException(nameof(prices));
 
-            if (low.Type != SwingType.Low ||
-                high.Type != SwingType.High)
-                throw new ArgumentException(
-                    "Expected a swing low followed by a swing high.");
+            if (low.Type != SwingType.Low ||high.Type != SwingType.High)
+                throw new ArgumentException("Expected a swing low followed by a swing high.");
 
-            if (low.PivotTimeUtc >= high.PivotTimeUtc ||
-                low.Price >= high.Price)
-                throw new ArgumentException(
-                    "Invalid upward swing.");
+            if (low.PivotTimeUtc >= high.PivotTimeUtc || low.Price >= high.Price)
+                throw new ArgumentException("Invalid upward swing.");
 
-            decimal[] requiredRatios =
-            {
-                0.236m, 0.382m, 0.5m, 0.618m, 0.786m
-            };
+            decimal[] requiredRatios = {0.236m, 0.382m, 0.5m, 0.618m, 0.786m};
 
             foreach (decimal ratio in requiredRatios)
             {
-                if (!prices.ContainsKey(ratio) ||
-                    prices[ratio] <= 0)
-                    throw new ArgumentException(
-                        "Missing or invalid Fibonacci level.");
+                if (!prices.ContainsKey(ratio) ||prices[ratio] <= 0)
+                    throw new ArgumentException("Missing or invalid Fibonacci level.");
             }
 
             Low = low;

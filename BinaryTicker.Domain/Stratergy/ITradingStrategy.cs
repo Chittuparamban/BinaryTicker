@@ -6,9 +6,6 @@ namespace BinaryTicker.Domain.Strategies
 {
     public interface ITradingStrategy
     {
-        TradeSignal Evaluate(
-            List<MarketBar> completedBars,
-            decimal heldQuantity,
-            FibonacciLevels? activeSetup);
+        TradeSignal Evaluate(List<MarketBar> completedBars, decimal heldQuantity, FibonacciLevels? activeSetup);
     }
 }
