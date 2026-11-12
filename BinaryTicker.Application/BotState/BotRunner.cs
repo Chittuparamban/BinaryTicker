@@ -19,6 +19,9 @@ namespace BinaryTicker.Application.Trading
         private CancellationTokenSource? _loopCancellation;
         private Task? _loopTask;
 
+        // Keep the failure so the bot cannot restart unsafely
+        private Exception? _loopFailure;
+
         public BotRunner(
             TradingCycleService tradingCycle,
             BotSettings settings,
@@ -31,16 +34,21 @@ namespace BinaryTicker.Application.Trading
                 throw new ArgumentNullException(nameof(settings));
 
             _settings.Validate();
+
             _onCycleCompleted = onCycleCompleted;
         }
 
         public string StateName => _state.Name;
 
-        // Allows Program.cs to observe loop failures
+        // Allows Program.cs to observe execution failures
         public Task Completion => _loopTask ?? Task.CompletedTask;
 
-        // Start the bot
-        public async Task StartAsync(CancellationToken ct = default)
+        // Non-null when the trading loop failed unexpectedly
+        public Exception? LastLoopFailure => _loopFailure;
+
+        // STEP 1: Start the bot
+        public async Task StartAsync(
+            CancellationToken ct = default)
         {
             await _stateLock.WaitAsync(ct);
 
@@ -54,8 +62,9 @@ namespace BinaryTicker.Application.Trading
             }
         }
 
-        // Stop the bot
-        public async Task StopAsync(CancellationToken ct = default)
+        // STEP 2: Stop the bot
+        public async Task StopAsync(
+            CancellationToken ct = default)
         {
             await _stateLock.WaitAsync(ct);
 
@@ -69,8 +78,9 @@ namespace BinaryTicker.Application.Trading
             }
         }
 
-        // Recover saved execution while stopped
-        public async Task RecoverAsync(CancellationToken ct = default)
+        // STEP 3: Recover previously saved execution
+        public async Task RecoverAsync(
+            CancellationToken ct = default)
         {
             await _stateLock.WaitAsync(ct);
 
@@ -89,11 +99,28 @@ namespace BinaryTicker.Application.Trading
         {
             ct.ThrowIfCancellationRequested();
 
+            // Do not restart after an unexpected failure
+            if (_loopFailure is not null)
+            {
+                throw new InvalidOperationException(
+                    "The trading loop previously failed. " +
+                    "Resolve the error and restart the application.",
+                    _loopFailure);
+            }
+
+            // Prevent a second loop
+            if (_loopTask is not null && !_loopTask.IsCompleted)
+            {
+                throw new InvalidOperationException(
+                    "Trading loop is already active.");
+            }
+
             _loopCancellation = new CancellationTokenSource();
 
+            // Change lifecycle state
             _state = new RunningState();
 
-            // Starts the asynchronous trading loop
+            // Start one asynchronous execution loop
             _loopTask = RunLoopAsync(_loopCancellation.Token);
 
             return Task.CompletedTask;
@@ -105,19 +132,32 @@ namespace BinaryTicker.Application.Trading
             // Request cancellation
             _loopCancellation?.Cancel();
 
+            Task? runningTask = _loopTask;
+
             try
             {
-                // Wait for the running cycle to finish
-                if (_loopTask is not null)
+                if (runningTask is not null)
                 {
-                    await _loopTask.WaitAsync(ct);
+                    try
+                    {
+                        // Wait for current cycle to finish or cancel
+                        await runningTask.WaitAsync(ct);
+                    }
+                    catch (Exception)
+                        when (runningTask.IsFaulted &&
+                              _loopFailure is not null &&
+                              !ct.IsCancellationRequested)
+                    {
+                        // The original failure remains observable
+                        // through Completion and LastLoopFailure.
+                        // Do not mask it during cleanup.
+                    }
                 }
             }
             finally
             {
-                // Do not dispose resources while the loop
-                // is still executing.
-                if (_loopTask is null || _loopTask.IsCompleted)
+                // Dispose only after the task is finished
+                if (runningTask is null || runningTask.IsCompleted)
                 {
                     _loopCancellation?.Dispose();
                     _loopCancellation = null;
@@ -128,21 +168,24 @@ namespace BinaryTicker.Application.Trading
         }
 
         // Called by StoppedState
-internal async Task RecoverCoreAsync(CancellationToken ct)
-{
-    TradingCycleResult result =
-        await _tradingCycle.ReconcilePendingAsync(ct);
+        internal async Task RecoverCoreAsync(
+            CancellationToken ct)
+        {
+            TradingCycleResult result =
+                await _tradingCycle.ReconcilePendingAsync(ct);
 
-    _onCycleCompleted?.Invoke(result);
+            // Notify observers
+            _onCycleCompleted?.Invoke(result);
 
-    if (result.Outcome == CycleOutcome.Blocked)
-    {
-        throw new InvalidOperationException(
-            $"Bot recovery blocked: {result.Reason}");
-    }
-}
+            // Block startup if recovery is incomplete
+            if (result.Outcome == CycleOutcome.Blocked)
+            {
+                throw new InvalidOperationException(
+                    $"Bot recovery blocked: {result.Reason}");
+            }
+        }
 
-        // Main asynchronous execution loop
+        // STEP 4: Main trading loop
         private async Task RunLoopAsync(CancellationToken ct)
         {
             try
@@ -151,21 +194,29 @@ internal async Task RecoverCoreAsync(CancellationToken ct)
                 {
                     ct.ThrowIfCancellationRequested();
 
-                    // Execute one trading cycle
+                    // Run one trading cycle
                     TradingCycleResult result =
                         await _tradingCycle.RunOnceAsync(ct);
 
-                    // Notify the configured observer
+                    // Notify console and file observers
                     _onCycleCompleted?.Invoke(result);
 
-                    // Wait before running another cycle
+                    // Wait before the next trading cycle
                     await Task.Delay(_settings.PollInterval, ct);
                 }
             }
             catch (OperationCanceledException)
                 when (ct.IsCancellationRequested)
             {
-                // Normal shutdown requested by StopAsync
+                // Normal cancellation requested by StopAsync
+            }
+            catch (Exception ex)
+            {
+                // Preserve the failure for Program.cs
+                _loopFailure = ex;
+
+                // Stop execution and expose the original error
+                throw;
             }
         }
     }

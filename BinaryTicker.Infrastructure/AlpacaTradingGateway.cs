@@ -229,6 +229,8 @@ namespace BinaryTicker.Infrastructure
                 ConvertStatus(order.OrderStatus),
                 order.OrderStatus.ToString(),
                 updatedUtc);
+
+
         }
 
         // 7. Convert SDK order status into BinaryTicker status
@@ -267,5 +269,39 @@ namespace BinaryTicker.Infrastructure
                     return AppOrderStatus.Unknown;
             }
         }
+
+
+public async Task<bool> IsAssetTradableAsync(
+    string symbol,
+    CancellationToken ct = default)
+{
+    if (string.IsNullOrWhiteSpace(symbol))
+        throw new ArgumentException("Symbol is required.");
+
+    var asset = await Client.GetAssetAsync(symbol, ct);
+
+    return asset.IsTradable;
+}
+
+public async Task<bool> HasOpenOrdersAsync(
+    string symbol,
+    CancellationToken ct = default)
+{
+    if (string.IsNullOrWhiteSpace(symbol))
+        throw new ArgumentException("Symbol is required.");
+
+    var request = new ListOrdersRequest
+    {
+        OrderStatusFilter = OrderStatusFilter.Open
+    }.WithSymbol(symbol);
+
+    var orders = await Client.ListOrdersAsync(request, ct);
+
+    return orders.Count > 0;
+}
+
+    
+    
+    
     }
 }
