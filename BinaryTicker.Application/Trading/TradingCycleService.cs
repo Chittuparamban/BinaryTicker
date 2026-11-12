@@ -101,8 +101,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
 
             if (enablePaperOrders && publisher is null)
             {
-                throw new ArgumentException(
-                    "Automatic paper orders require an event publisher.");
+                throw new ArgumentException("Automatic paper orders require an event publisher.");
             }
 
             Settings.Validate();
@@ -164,7 +163,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
 
                 if (held < 0 ||  held != decimal.Truncate(held))
                 {
-                    return Result(CycleOutcome.Blocked, "Unsupported short or fractional position.", now);
+                    return Result(CycleOutcome.Blocked, "Unsupported (short selling )fractional position.", now);
                 }
 
                 if (held > 0 && (state?.ActiveLow is null || state.ActiveHigh is null))
@@ -181,6 +180,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
         }
 
         // Executes strategy and handles automatic paper orders
+        // Core logic 
         private async Task<TradingCycleResult> ExecuteCycleAsync(CancellationToken ct)
         {
             DateTimeOffset now = Clock.GetUtcNow();
@@ -194,8 +194,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             }
 
             // load saved state
-            TradeState? saved = await Store.LoadAsync(account.AccountId, Settings.Symbol,
-                Settings.Timeframe, Settings.StrategyVersion, ct);
+            TradeState? saved = await Store.LoadAsync(account.AccountId, Settings.Symbol, Settings.Timeframe, Settings.StrategyVersion, ct);
 
             TradeState state;
             if (saved != null)
@@ -231,7 +230,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             }
 
             // Retrieve completed market candles
-            IReadOnlyList<MarketBar> received = await MarketData.GetCompletedBarsAsync(Settings.Symbol,
+            List<MarketBar> received = await MarketData.GetCompletedBarsAsync(Settings.Symbol,
                     Settings.Timeframe, now.AddDays(-30),now, ct);
 
             List<MarketBar> bars = received.TakeLast(Settings.HistoryBarCount).ToList();
@@ -277,8 +276,7 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             // Restore Fibonacci setup
             FibonacciLevels? activeSetup = null;
 
-            if (state.ActiveLow is not null &&
-                state.ActiveHigh is not null)
+            if (state.ActiveLow is not null && state.ActiveHigh is not null)
             {
                 activeSetup = Calculator.Calculate(state.ActiveLow,state.ActiveHigh);
             }
