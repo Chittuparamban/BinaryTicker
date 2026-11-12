@@ -19,8 +19,7 @@ public void Publish(TradeLogEntry entry)
     var handlers = TradeEventPublished;
 
     if (handlers is null)
-        throw new InvalidOperationException(
-            "No event observers are registered.");
+        throw new InvalidOperationException("No event observers are registered.");
 
     var failures = new List<Exception>();
 
@@ -38,9 +37,7 @@ public void Publish(TradeLogEntry entry)
 
     if (failures.Count > 0)
     {
-        throw new AggregateException(
-            "One or more trade event observers failed.",
-            failures);
+        throw new AggregateException("One or more trade event observers failed.",failures);
     }
 }
 

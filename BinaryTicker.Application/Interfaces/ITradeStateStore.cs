@@ -7,15 +7,9 @@ namespace BinaryTicker.Application.Interfaces
 {
     public interface ITradeStateStore
     {
-        Task<TradeState?> LoadAsync(
-            string accountId,
-            string symbol,
-            string timeframe,
-            string strategyVersion,
-            CancellationToken cancellationToken = default);
+        Task<TradeState?> LoadAsync(string accId,string symbol,string timeframe,
+            string strategyVer, CancellationToken cancelToken = default);
 
-        Task SaveAsync(
-            TradeState state,
-            CancellationToken cancellationToken = default);
+        Task SaveAsync(TradeState state, CancellationToken cancelToken = default);
     }
 }
