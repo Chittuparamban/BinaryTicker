@@ -17,28 +17,16 @@ namespace BinaryTicker.Application.Trading
         public string RawStatus { get; }
         public DateTimeOffset UpdatedAtUtc { get; }
 
-        public OrderSnapshot(
-            string brokerOrderId,
-            string clientOrderId,
-            string symbol,
-            OrderSide side,
-            decimal quantity,
-            decimal filledQuantity,
-            decimal? averageFillPrice,
-            OrderStatus status,
-            string rawStatus,
-            DateTimeOffset updatedAtUtc)
+        public OrderSnapshot( string brokerOrderId,string clientOrderId,
+            string symbol, OrderSide side, decimal quantity, decimal filledQuantity,
+            decimal? averageFillPrice, OrderStatus status, string rawStatus, DateTimeOffset updatedAtUtc)
         {
             if (string.IsNullOrWhiteSpace(brokerOrderId) ||
-                string.IsNullOrWhiteSpace(clientOrderId) ||
-                string.IsNullOrWhiteSpace(symbol))
-                throw new ArgumentException(
-                    "Order identifiers and symbol are required.");
+                string.IsNullOrWhiteSpace(clientOrderId) ||string.IsNullOrWhiteSpace(symbol))
+                throw new ArgumentException( "Order identifiers and symbol are required.");
 
-            if (quantity <= 0 || filledQuantity < 0 ||
-                filledQuantity > quantity)
-                throw new ArgumentException(
-                    "Invalid order quantities.");
+            if (quantity <= 0 || filledQuantity < 0 || filledQuantity > quantity)
+                throw new ArgumentException( "Invalid order quantities.");
 
             BrokerOrderId = brokerOrderId;
             ClientOrderId = clientOrderId;

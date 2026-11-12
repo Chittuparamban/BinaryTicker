@@ -11,19 +11,14 @@ namespace BinaryTicker.Application.Trading
         public decimal MarketValue { get; }
         public DateTimeOffset RetrievedAtUtc { get; }
 
-        public PositionSnapshot(
-            string symbol,
-            decimal quantity,
-            decimal averageEntryPrice,
-            decimal marketValue,
-            DateTimeOffset retrievedAtUtc)
+        public PositionSnapshot(string symbol,  decimal quantity, decimal averageEntryPrice,
+            decimal marketValue, DateTimeOffset retrievedAtUtc)
         {
             if (string.IsNullOrWhiteSpace(symbol))
                 throw new ArgumentException("Symbol is required.");
 
             if (quantity <= 0 || averageEntryPrice < 0)
-                throw new ArgumentException(
-                    "Invalid position quantity or entry price.");
+                throw new ArgumentException("Invalid position quantity or entry price.");
 
             Symbol = symbol;
             Quantity = quantity;

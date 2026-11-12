@@ -12,13 +12,8 @@ namespace BinaryTicker.Application.Trading
         public bool IsPaper { get; }
         public DateTimeOffset RetrievedAtUtc { get; }
 
-        public TradingAccountSnapshot(
-            string accountId,
-            decimal cash,
-            decimal buyingPower,
-            bool canTrade,
-            bool isPaper,
-            DateTimeOffset retrievedAtUtc)
+        public TradingAccountSnapshot(string accountId,decimal cash, decimal buyingPower,
+            bool canTrade, bool isPaper, DateTimeOffset retrievedAtUtc)
         {
             if (string.IsNullOrWhiteSpace(accountId))
                 throw new ArgumentException("Account ID is required.");

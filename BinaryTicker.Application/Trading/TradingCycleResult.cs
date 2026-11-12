@@ -6,12 +6,7 @@ namespace BinaryTicker.Application.Trading
 {
     public enum CycleOutcome
     {
-        NoNewBar,
-        Hold,
-        Blocked,
-        Preview,
-        Reconciled,
-        Submitted
+        NoNewBar, Hold, Blocked, Preview,Reconciled, Submitted
     }
 
     public sealed class TradingCycleResult
@@ -22,11 +17,7 @@ namespace BinaryTicker.Application.Trading
         public TradeSignal? Signal { get; }
         public OrderSnapshot? Order { get; }
 
-        public TradingCycleResult(
-            CycleOutcome outcome,
-            string reason,
-            DateTimeOffset atUtc,
-            TradeSignal? signal = null,
+        public TradingCycleResult(CycleOutcome outcome,string reason, DateTimeOffset atUtc, TradeSignal? signal = null,
             OrderSnapshot? order = null)
         {
             Outcome = outcome;
