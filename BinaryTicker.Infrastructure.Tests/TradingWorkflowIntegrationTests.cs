@@ -198,16 +198,7 @@ namespace BinaryTicker.Infrastructure.Tests
             }
             finally
             {
-                // The using declaration is disposed at scope exit.
-                // For Windows, directory cleanup is handled below.
-                try
-                {
-                    DeleteTestDirectory(directory);
-                }
-                catch (IOException)
-                {
-                    // See cleanup note below.
-                }
+                DeleteTestDirectory(directory);
             }
         }
 
@@ -311,6 +302,18 @@ namespace BinaryTicker.Infrastructure.Tests
                 .ReturnsAsync((PositionSnapshot?)null);
 
             gateway.Setup(g => g.IsMarketOpenAsync(
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            // Simulate no conflicting broker orders.
+            gateway.Setup(g => g.HasOpenOrdersAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            // Simulate a tradable stock.
+            gateway.Setup(g => g.IsAssetTradableAsync(
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
