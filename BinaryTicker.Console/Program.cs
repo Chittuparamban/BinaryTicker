@@ -97,8 +97,10 @@ namespace BinaryTicker
 
                 FibonacciCalc calculator = new FibonacciCalc();
 
-                ITradingStrategy strategy = new FibonacciRetracementStrategy(
-                        new SwingDetector(),calculator, fibonacciSettings);
+ITradingStrategy strategy =
+    new FibonacciRetracementStrategy(
+        new SwingDetector(), calculator,
+        fibonacciSettings, demonstrationMode: true);
 
                 // configure Risk Management
                 RiskLimits riskLimits =new RiskLimits(

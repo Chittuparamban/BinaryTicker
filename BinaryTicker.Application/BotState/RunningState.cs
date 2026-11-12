@@ -8,29 +8,28 @@ namespace BinaryTicker.Application.BotState
 {
     public sealed class RunningState : IBotState
     {
-        public string Name => "Running";
+        public string Name
+        {
+            get
+            {
+                return "Running";
+            }
+        }
 
-        public Task StartAsync(
-            BotRunner runner,
-            CancellationToken ct)
+        public Task StartAsync(BotRunner runner, CancellationToken ct)
         {
             // Prevent a second trading loop
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(
-            BotRunner runner,
-            CancellationToken ct)
+        public Task StopAsync(BotRunner runner, CancellationToken ct)
         {
             return runner.StopCoreAsync(ct);
         }
 
-        public Task RecoverAsync(
-            BotRunner runner,
-            CancellationToken ct)
+        public Task RecoverAsync(BotRunner runner, CancellationToken ct)
         {
-            throw new InvalidOperationException(
-                "Cannot recover while the bot is running.");
+            throw new InvalidOperationException( "Cannot recover while the bot is running.");
         }
     }
 }

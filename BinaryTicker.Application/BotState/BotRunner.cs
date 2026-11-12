@@ -8,214 +8,253 @@ namespace BinaryTicker.Application.Trading
 {
     public sealed class BotRunner
     {
-        private readonly TradingCycleService _tradingCycle;
-        private readonly BotSettings _settings;
-        private readonly Action<TradingCycleResult>? _onCycleCompleted;
+        // Private properties
+        private TradingCycleService TradingCycle { get; }
+        private BotSettings Settings { get; }
+        private Action<TradingCycleResult>? OnCycleCompleted { get; }
 
-        private readonly SemaphoreSlim _stateLock = new(1, 1);
+        private SemaphoreSlim StateLock { get; }
+        private IBotState State { get; set; }
 
-        private IBotState _state = new StoppedState();
+        private CancellationTokenSource? LoopCancellation { get; set; }
+        private Task? LoopTask { get; set; }
+        private Exception? LoopFailure { get; set; }
 
-        private CancellationTokenSource? _loopCancellation;
-        private Task? _loopTask;
-
-        // Keep the failure so the bot cannot restart unsafely
-        private Exception? _loopFailure;
-
-        public BotRunner(
-            TradingCycleService tradingCycle,
-            BotSettings settings,
+        public BotRunner(TradingCycleService tradingCycle, BotSettings settings,
             Action<TradingCycleResult>? onCycleCompleted = null)
         {
-            _tradingCycle = tradingCycle ??
+            if (tradingCycle == null)
+            {
                 throw new ArgumentNullException(nameof(tradingCycle));
+            }
 
-            _settings = settings ??
+            if (settings == null)
+            {
                 throw new ArgumentNullException(nameof(settings));
+            }
 
-            _settings.Validate();
+            TradingCycle = tradingCycle;
+            Settings = settings;
+            OnCycleCompleted = onCycleCompleted;
 
-            _onCycleCompleted = onCycleCompleted;
+            Settings.Validate();
+
+            // Allow only one state operation at a time
+            StateLock = new SemaphoreSlim(1, 1);
+
+            // Bot starts in the Stopped state
+            State = new StoppedState();
+
+            LoopCancellation = null;
+            LoopTask = null;
+            LoopFailure = null;
         }
 
-        public string StateName => _state.Name;
+        // Return the current bot state
+        public string StateName
+        {
+            get
+            {
+                return State.Name;
+            }
+        }
 
-        // Allows Program.cs to observe execution failures
-        public Task Completion => _loopTask ?? Task.CompletedTask;
+        // Allow Program.cs to monitor the trading loop
+        public Task Completion
+        {
+            get
+            {
+                if (LoopTask == null)
+                {
+                    return Task.CompletedTask;
+                }
 
-        // Non-null when the trading loop failed unexpectedly
-        public Exception? LastLoopFailure => _loopFailure;
+                return LoopTask;
+            }
+        }
+
+        // Return any unexpected execution failure
+        public Exception? LastLoopFailure
+        {
+            get
+            {
+                return LoopFailure;
+            }
+        }
 
         // STEP 1: Start the bot
-        public async Task StartAsync(
-            CancellationToken ct = default)
+        public async Task StartAsync(CancellationToken ct = default)
         {
-            await _stateLock.WaitAsync(ct);
+            await StateLock.WaitAsync(ct);
 
             try
             {
-                await _state.StartAsync(this, ct);
+                await State.StartAsync(this, ct);
             }
             finally
             {
-                _stateLock.Release();
+                StateLock.Release();
             }
         }
 
         // STEP 2: Stop the bot
-        public async Task StopAsync(
-            CancellationToken ct = default)
+        public async Task StopAsync(CancellationToken ct = default)
         {
-            await _stateLock.WaitAsync(ct);
+            await StateLock.WaitAsync(ct);
 
             try
             {
-                await _state.StopAsync(this, ct);
+                await State.StopAsync(this, ct);
             }
             finally
             {
-                _stateLock.Release();
+                StateLock.Release();
             }
         }
 
-        // STEP 3: Recover previously saved execution
-        public async Task RecoverAsync(
-            CancellationToken ct = default)
+        // STEP 3: Recover saved trading execution
+        public async Task RecoverAsync(CancellationToken ct = default)
         {
-            await _stateLock.WaitAsync(ct);
+            await StateLock.WaitAsync(ct);
 
             try
             {
-                await _state.RecoverAsync(this, ct);
+                await State.RecoverAsync(this, ct);
             }
             finally
             {
-                _stateLock.Release();
+                StateLock.Release();
             }
         }
 
-        // Called by StoppedState
+        // Called by StoppedState to begin trading
         internal Task StartCoreAsync(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            // Do not restart after an unexpected failure
-            if (_loopFailure is not null)
+            // Prevent restarting after an unexpected failure
+            if (LoopFailure != null)
             {
-                throw new InvalidOperationException(
-                    "The trading loop previously failed. " +
-                    "Resolve the error and restart the application.",
-                    _loopFailure);
+                throw new InvalidOperationException("The trading loop previously failed. " +
+                    "Resolve the error and restart the application.",LoopFailure);
             }
 
-            // Prevent a second loop
-            if (_loopTask is not null && !_loopTask.IsCompleted)
+            // Prevent multiple trading loops
+            if (LoopTask != null && !LoopTask.IsCompleted)
             {
-                throw new InvalidOperationException(
-                    "Trading loop is already active.");
+                throw new InvalidOperationException("Trading loop is already active.");
             }
 
-            _loopCancellation = new CancellationTokenSource();
+            // Create a cancellation source for the loop
+            LoopCancellation = new CancellationTokenSource();
 
-            // Change lifecycle state
-            _state = new RunningState();
+            // Change state to Running
+            State = new RunningState();
 
-            // Start one asynchronous execution loop
-            _loopTask = RunLoopAsync(_loopCancellation.Token);
+            // Begin asynchronous execution
+            LoopTask = RunLoopAsync(LoopCancellation.Token);
 
             return Task.CompletedTask;
         }
 
-        // Called by RunningState
+        // Called by RunningState to stop trading
         internal async Task StopCoreAsync(CancellationToken ct)
         {
             // Request cancellation
-            _loopCancellation?.Cancel();
+            if (LoopCancellation != null)
+            {
+                LoopCancellation.Cancel();
+            }
 
-            Task? runningTask = _loopTask;
+            Task? runningTask = LoopTask;
 
             try
             {
-                if (runningTask is not null)
+                if (runningTask != null)
                 {
                     try
                     {
-                        // Wait for current cycle to finish or cancel
+                        // Wait for the trading loop to finish
                         await runningTask.WaitAsync(ct);
                     }
                     catch (Exception)
                         when (runningTask.IsFaulted &&
-                              _loopFailure is not null &&
+                              LoopFailure != null &&
                               !ct.IsCancellationRequested)
                     {
-                        // The original failure remains observable
-                        // through Completion and LastLoopFailure.
-                        // Do not mask it during cleanup.
+                        // Preserve the original loop failure
+                        // so Program.cs can inspect it.
                     }
                 }
             }
             finally
             {
-                // Dispose only after the task is finished
-                if (runningTask is null || runningTask.IsCompleted)
+                // Only clean up after the loop has finished
+                if (runningTask == null || runningTask.IsCompleted)
                 {
-                    _loopCancellation?.Dispose();
-                    _loopCancellation = null;
+                    if (LoopCancellation != null)
+                    {
+                        LoopCancellation.Dispose();
+                    }
 
-                    _state = new StoppedState();
+                    LoopCancellation = null;
+
+                    // Return to Stopped state
+                    State = new StoppedState();
                 }
             }
         }
 
-        // Called by StoppedState
-        internal async Task RecoverCoreAsync(
-            CancellationToken ct)
+        // Called by StoppedState during startup recovery
+        internal async Task RecoverCoreAsync(CancellationToken ct)
         {
-            TradingCycleResult result =
-                await _tradingCycle.ReconcilePendingAsync(ct);
+            TradingCycleResult result =await TradingCycle.ReconcilePendingAsync(ct);
 
-            // Notify observers
-            _onCycleCompleted?.Invoke(result);
+            // Notify registered observers
+            if (OnCycleCompleted != null)
+            {
+                OnCycleCompleted(result);
+            }
 
-            // Block startup if recovery is incomplete
+            // Do not start if recovery is incomplete
             if (result.Outcome == CycleOutcome.Blocked)
             {
-                throw new InvalidOperationException(
-                    $"Bot recovery blocked: {result.Reason}");
+                throw new InvalidOperationException("Bot recovery blocked: " + result.Reason);
             }
         }
 
-        // STEP 4: Main trading loop
+        // STEP 4: Execute the automatic trading loop
         private async Task RunLoopAsync(CancellationToken ct)
         {
             try
             {
                 while (true)
                 {
+                    // Check whether cancellation was requested
                     ct.ThrowIfCancellationRequested();
 
-                    // Run one trading cycle
-                    TradingCycleResult result =
-                        await _tradingCycle.RunOnceAsync(ct);
+                    // Execute one trading cycle
+                    TradingCycleResult result = await TradingCycle.RunOnceAsync(ct);
 
-                    // Notify console and file observers
-                    _onCycleCompleted?.Invoke(result);
+                    // Notify observers of the result
+                    if (OnCycleCompleted != null)
+                    {
+                        OnCycleCompleted(result);
+                    }
 
-                    // Wait before the next trading cycle
-                    await Task.Delay(_settings.PollInterval, ct);
+                    // Wait before checking the market again
+                    await Task.Delay(Settings.PollInterval, ct);
                 }
             }
             catch (OperationCanceledException)
                 when (ct.IsCancellationRequested)
             {
-                // Normal cancellation requested by StopAsync
+                // Normal cancellation when stopping the bot
             }
             catch (Exception ex)
             {
-                // Preserve the failure for Program.cs
-                _loopFailure = ex;
-
-                // Stop execution and expose the original error
+                // Save unexpected errors
+                LoopFailure = ex;                
                 throw;
             }
         }

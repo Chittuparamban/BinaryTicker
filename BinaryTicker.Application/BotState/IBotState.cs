@@ -9,16 +9,10 @@ namespace BinaryTicker.Application.BotState
     {
         string Name { get; }
 
-        Task StartAsync(
-            BotRunner runner,
-            CancellationToken ct);
+        Task StartAsync(BotRunner runner, CancellationToken ct);
 
-        Task StopAsync(
-            BotRunner runner,
-            CancellationToken ct);
+        Task StopAsync(BotRunner runner, CancellationToken ct);
 
-        Task RecoverAsync(
-            BotRunner runner,
-            CancellationToken ct);
+        Task RecoverAsync(BotRunner runner,CancellationToken ct);
     }
 }

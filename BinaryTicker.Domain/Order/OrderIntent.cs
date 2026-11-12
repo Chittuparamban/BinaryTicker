@@ -25,7 +25,7 @@ namespace BinaryTicker.Domain.Order
             if (string.IsNullOrWhiteSpace(clientOrderId) || clientOrderId.Length > 48)
                 throw new ArgumentException("A client order ID of at most 48 characters is required.");
 
-            Symbol = symbol.Trim().ToUpperInvariant();
+            Symbol = symbol.Trim().ToUpper();
             Side = side;
             Quantity = quantity;
             ClientOrderId = clientOrderId;

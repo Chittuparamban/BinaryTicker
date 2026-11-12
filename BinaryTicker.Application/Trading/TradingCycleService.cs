@@ -197,8 +197,14 @@ private SemaphoreSlim CycleLock { get; } = new(1, 1);
             TradeState? saved = await Store.LoadAsync(account.AccountId, Settings.Symbol,
                 Settings.Timeframe, Settings.StrategyVersion, ct);
 
-            TradeState state = saved ?? TradeState.CreateNew(account.AccountId,Settings.Symbol,
-                Settings.Timeframe, Settings.StrategyVersion);
+            TradeState state;
+            if (saved != null)
+               state = saved;
+            else
+            {
+                state = TradeState.CreateNew(account.AccountId, Settings.Symbol,Settings.Timeframe, Settings.StrategyVersion);
+            }
+
 
             // Resolve previously submitted orders first
             if (state.PendingOrder is not null)

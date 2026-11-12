@@ -47,8 +47,7 @@ namespace BinaryTicker.Domain.Risk
                 if (estimatedOrderValue > availableBuyingPower)
                     return (false, "Insufficient buying power.");
 
-                if (currentPositionValue + estimatedOrderValue >
-                    limits.MaxPosVal)
+                if (currentPositionValue + estimatedOrderValue >limits.MaxPosVal)
                     return (false, "Position value would exceed limit.");
 
                 return (true, "Buy order passed risk validation.");
